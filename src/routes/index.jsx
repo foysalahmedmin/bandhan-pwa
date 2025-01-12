@@ -6,6 +6,7 @@ import RootLayout from "@/components/layouts/RootLayout";
 import ErrorPage from "@/pages/(partials)/ErrorPage";
 
 // Common Pages
+import HomePage from "@/pages/(common)/HomePage";
 
 export const routes = [
   {
@@ -17,8 +18,29 @@ export const routes = [
         path: "/",
         element: <CommonLayout />,
         children: [
-          
-        ]
+          {
+            path: "/",
+            element: <HomePage />,
+          },
+          {
+            path: "/notifications",
+          },
+          {
+            path: "/call-status",
+          },
+          {
+            path: "/communication-pannel",
+          },
+          {
+            path: "/select-reward",
+          },
+          {
+            path: "/outlet-location-instruction",
+          },
+          {
+            path: "/eas-advocacy",
+          },
+        ],
       },
     ],
   },

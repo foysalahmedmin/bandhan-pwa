@@ -17,15 +17,15 @@
   --popover-foreground: 0 0% 83%;
 
   /* Accent Colors */
-  --accent: 0 0% 9%;
-  --accent-foreground: 0 0% 98%;
+  --accent: 12 69% 55%;
+  --accent-foreground: 0 0% 100%;
 
   /* Primary Colors */
-  --primary: 147 37% 52%;
+  --primary: 12 69% 55%;
   --primary-foreground: 0 0% 100%;
 
   /* Secondary Colors */
-  --secondary: 19 100% 64%;
+  --secondary: 0 0% 45%;
   --secondary-foreground: 0 0% 100%;
 
   /* Tertiary Colors */
@@ -120,11 +120,11 @@
   --card-foreground: 0 0% 25%;
   --popover: 0 0% 25%;
   --popover-foreground: 0 0% 83%;
-  --accent: 0 0% 9%;
-  --accent-foreground: 0 0% 98%;
-  --primary: 147 37% 52%;
+  --accent: 12 69% 55%;
+  --accent-foreground: 0 0% 100%;
+  --primary: 12 69% 55%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 19 100% 64%;
+  --secondary: 0 0% 45%;
   --secondary-foreground: 0 0% 100%;
   --ternary: 237 100% 75%;
   --ternary-foreground: 0 0% 100%;
@@ -153,11 +153,11 @@
   --card-foreground: 0 0% 83%;
   --popover: 0 0% 83%;
   --popover-foreground: 0 0% 25%;
-  --accent: 0 0% 98%;
-  --accent-foreground: 0 0% 9%;
-  --primary: 147 37% 52%;
+  --accent: 12 69% 55%;
+  --accent-foreground: 0 0% 100%;
+  --primary: 12 69% 55%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 19 100% 64%;
+  --secondary: 0 0% 45%;
   --secondary-foreground: 0 0% 100%;
   --ternary: 237 100% 75%;
   --ternary-foreground: 0 0% 100%;

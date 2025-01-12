@@ -15,6 +15,11 @@ html {
   font-size: 16px;
 }
 body {
+  background-image: url("/background.png");
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   background-color: theme("colors.background");
   scroll-behavior: smooth;
   color: theme("colors.foreground");
