@@ -1,8 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
-import motionReducer from "./slices/motionSlice";
+import authenticationReducer, {
+  authenticationSlice,
+} from "./slices/authenticationSlice";
+import languageReducer, { languageSlice } from "./slices/languageSlice";
 
 export default configureStore({
   reducer: {
-    motion: motionReducer,
+    [authenticationSlice.name]: authenticationReducer,
+    [languageSlice.name]: languageReducer,
   },
 });

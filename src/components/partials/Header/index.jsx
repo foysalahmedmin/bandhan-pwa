@@ -1,11 +1,18 @@
 import { Bell } from "@/assets/svg/Bell";
 import { Button } from "@/components/ui/Button";
+import {
+  Dropdown,
+  DropdownContent,
+  DropdownToggler,
+} from "@/components/ui/Dropdown";
+import useLanguageState from "@/hooks/state/useLanguageState";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, EllipsisVertical } from "lucide-react";
+import { ArrowLeft, EllipsisVertical, LogOut, Settings } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-const labels = {
+const labelsEn = {
   "/": "",
+  "/settings": "settings",
   "/notifications": "notifications",
   "/call-status": "call status",
   "/communication-pannel": "communication pannel",
@@ -14,7 +21,20 @@ const labels = {
   "/eas-advocacy": "eas advocacy",
 };
 
+const labelsBn = {
+  "/": "",
+  "/settings": "সেটিংস",
+  "/notifications": "বিজ্ঞপ্তি",
+  "/call-status": "কল স্ট্যাটাস",
+  "/communication-pannel": "যোগাযোগ প্যানেল",
+  "/select-reward": "রিওয়ার্ড নির্বাচন",
+  "/outlet-location-instruction": "আউটলেটের অবস্থানের নির্দেশনা",
+  "/eas-advocacy": "ইএএস এডভোকেসি",
+};
+
 const Header = ({ className }) => {
+  const { isEnglish } = useLanguageState();
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -22,6 +42,7 @@ const Header = ({ className }) => {
     navigate(-1);
   };
 
+  const labels = isEnglish ? labelsEn : labelsBn;
   const label = labels[location?.pathname] || "";
 
   return (
@@ -34,7 +55,7 @@ const Header = ({ className }) => {
                 {location?.pathname !== "/" && (
                   <Button
                     onClick={handleBack}
-                    className="font-light tracking-widest text-accent"
+                    className="font-light text-accent"
                     shape="none"
                     variant="none"
                     size="none"
@@ -44,23 +65,57 @@ const Header = ({ className }) => {
                 )}
               </div>
               <div className="flex items-center justify-center">
-                <strong className="capitalize leading-none">{label}</strong>
+                <strong className="capitalize leading-none text-primary">
+                  {label}
+                </strong>
               </div>
               <div className="flex items-center justify-end gap-2">
-                <Link
-                  className="font-light tracking-widest text-accent"
-                  to={"/notifications"}
-                >
-                  <Bell className="size-6" />
-                </Link>
-                <Button
-                  className="font-light tracking-widest text-accent"
-                  shape="none"
-                  variant="none"
-                  size="none"
-                >
-                  <EllipsisVertical className="size-6" />
-                </Button>
+                <div>
+                  <Link
+                    className="font-light text-accent"
+                    to={"/notifications"}
+                  >
+                    <Bell className="size-6" />
+                  </Link>
+                </div>
+                <div>
+                  <Dropdown>
+                    <DropdownToggler
+                      className="font-light text-accent"
+                      shape="none"
+                      variant="none"
+                      size="none"
+                    >
+                      <EllipsisVertical className="size-6" />
+                    </DropdownToggler>
+                    <DropdownContent className="left-auto right-0 w-40 self-center bg-primary text-primary-foreground">
+                      <div>
+                        <ul className="space-y-4">
+                          <li>
+                            <Link
+                              className="flex items-center gap-2 font-light"
+                              to={"/settings"}
+                            >
+                              <Settings /> <span>settings</span>
+                            </Link>
+                          </li>
+                          <hr className="border-primary-foreground" />
+                          <li>
+                            <Button
+                              className=""
+                              shape="none"
+                              variant="none"
+                              size="none"
+                            >
+                              <LogOut /> <span>Logout</span>
+                            </Button>
+                          </li>
+                        </ul>
+                      </div>
+                    </DropdownContent>
+                  </Dropdown>
+                  {/* <Button></Button> */}
+                </div>
               </div>
             </div>
           </div>

@@ -26,7 +26,7 @@ const Radio = forwardRef(
       loadingClassName,
       size,
       type = "radio",
-      as = "form-control",
+      as = "input",
       asChild = false,
       disabled = false,
       isLoading = false,

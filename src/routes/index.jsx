@@ -1,4 +1,5 @@
 // Layouts
+import AuthenticationLayout from "@/components/layouts/AuthenticationLayout";
 import CommonLayout from "@/components/layouts/CommonLayout";
 import RootLayout from "@/components/layouts/RootLayout";
 
@@ -6,7 +7,9 @@ import RootLayout from "@/components/layouts/RootLayout";
 import ErrorPage from "@/pages/(partials)/ErrorPage";
 
 // Common Pages
+import SignInPage from "@/pages/(authentication)/SignInPage";
 import HomePage from "@/pages/(common)/HomePage";
+import SettingsPage from "@/pages/(common)/SettingsPage";
 
 export const routes = [
   {
@@ -21,6 +24,10 @@ export const routes = [
           {
             path: "/",
             element: <HomePage />,
+          },
+          {
+            path: "/settings",
+            element: <SettingsPage />,
           },
           {
             path: "/notifications",
@@ -39,6 +46,16 @@ export const routes = [
           },
           {
             path: "/eas-advocacy",
+          },
+        ],
+      },
+      {
+        path: "/authentication",
+        element: <AuthenticationLayout />,
+        children: [
+          {
+            path: "sign-in",
+            element: <SignInPage />,
           },
         ],
       },

@@ -189,14 +189,29 @@
   --accent-foreground: var(--primary-foreground);
 }
 
+.primary-foreground {
+  --accent: var(--primary-foreground);
+  --accent-foreground: var(--primary);
+}
+
 .secondary {
   --accent: var(--secondary);
   --accent-foreground: var(--secondary-foreground);
 }
 
+.secondary-foreground {
+  --accent: var(--secondary-foreground);
+  --accent-foreground: var(--secondary);
+}
+
 .tertiary {
   --accent: var(--tertiary);
   --accent-foreground: var(--tertiary-foreground);
+}
+
+.tertiary-foreground {
+  --accent: var(--tertiary-foreground);
+  --accent-foreground: var(--tertiary);
 }
 
 /* Responsive Layout Adjustments */
