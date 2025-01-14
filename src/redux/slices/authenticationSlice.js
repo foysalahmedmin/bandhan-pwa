@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   isAuthenticated: false,
-  user: null,
+  user: localStorage.getItem("authToken") || null,
   userInfo: {},
   loginPanel: "",
 };
@@ -20,11 +20,26 @@ export const authenticationSlice = createSlice({
       state.userInfo = {};
     },
 
-    setUser: (state) => {
-      state.user = {};
+    setUser: (state, { payload }) => {
+      if (payload) {
+        localStorage.setItem("authToken", payload);
+        state.user = payload;
+        state.isAuthenticated = true;
+      } else {
+        localStorage.removeItem("authToken");
+        state.user = null;
+        state.userInfo = {};
+        state.isAuthenticated = false;
+      }
     },
-    setUserInfo: (state) => {
-      state.userInfo = {};
+    setUserInfo: (state, { payload }) => {
+      if (Object.keys(payload)?.length > 0) {
+        state.userInfo = payload;
+        state.isAuthenticated = true;
+      } else {
+        state.userInfo = {};
+        state.isAuthenticated = false;
+      }
     },
 
     setLoginPanel: (state, { payload }) => {
@@ -35,6 +50,12 @@ export const authenticationSlice = createSlice({
     },
   },
 });
-export const { login, logout, setLoginPanel, removeLoginPanel } =
-  authenticationSlice.actions;
+export const {
+  login,
+  logout,
+  setUser,
+  setUserInfo,
+  setLoginPanel,
+  removeLoginPanel,
+} = authenticationSlice.actions;
 export default authenticationSlice.reducer;

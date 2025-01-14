@@ -18,7 +18,7 @@ const SignInPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedLoginType, setSelectedLoginType] = useState("bandhan");
 
-  const { setLoginPanel } = useAuthenticationState();
+  const { setUser, setLoginPanel } = useAuthenticationState();
 
   const [signinUser] = useSigninUserMutation();
   const [sheikhSigninUser] = useSheikhSigninUserMutation();
@@ -109,10 +109,14 @@ const SignInPage = () => {
         const data = await response.json();
 
         if (data?.code === 200) {
-          authStorage.storeAuthToken(data.payload.auth_token);
+          console.log(data);
+          const token = data?.payload?.auth_token;
+          setUser(token);
+          authStorage.storeAuthToken(token);
           setLoginPanel("bandhan");
           navigate("/", { replace: true });
         } else {
+          setUser(null);
           alert(data?.message || "Login failed");
         }
       } else if (selectedLoginType === "zenith") {
