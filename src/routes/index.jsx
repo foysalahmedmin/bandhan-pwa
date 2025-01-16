@@ -9,6 +9,7 @@ import ErrorPage from "@/pages/(partials)/ErrorPage";
 // Common Pages
 import SignInPage from "@/pages/(authentication)/SignInPage";
 import HomePage from "@/pages/(common)/HomePage";
+import RewardPage from "@/pages/(common)/RewardPage";
 import SettingsPage from "@/pages/(common)/SettingsPage";
 
 export const routes = [
@@ -40,6 +41,7 @@ export const routes = [
           },
           {
             path: "/select-reward",
+            element: <RewardPage />,
           },
           {
             path: "/outlet-location-instruction",

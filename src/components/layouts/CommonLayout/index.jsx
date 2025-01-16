@@ -1,11 +1,14 @@
 import Header from "@/components/partials/Header";
+import PrivateRoute from "@/components/partials/PrivateRoute";
 import { Outlet } from "react-router-dom";
 
 const CommonLayout = () => {
   return (
     <>
-      <Header />
-      <Outlet />
+      <PrivateRoute>
+        <Header />
+        <Outlet />
+      </PrivateRoute>
     </>
   );
 };

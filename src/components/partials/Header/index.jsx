@@ -5,6 +5,7 @@ import {
   DropdownContent,
   DropdownToggler,
 } from "@/components/ui/Dropdown";
+import useAuthenticationState from "@/hooks/state/useAuthenticationState";
 import useLanguageState from "@/hooks/state/useLanguageState";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, EllipsisVertical, LogOut, Settings } from "lucide-react";
@@ -33,6 +34,7 @@ const labelsBn = {
 };
 
 const Header = ({ className }) => {
+  const { setUser, setUserInfo, setLoginPanel } = useAuthenticationState();
   const { isEnglish } = useLanguageState();
 
   const navigate = useNavigate();
@@ -40,6 +42,12 @@ const Header = ({ className }) => {
 
   const handleBack = () => {
     navigate(-1);
+  };
+  const handleLogout = () => {
+    setUser(null);
+    setUserInfo({});
+    setLoginPanel("");
+    navigate("/authentication/sign-in");
   };
 
   const labels = isEnglish ? labelsEn : labelsBn;
@@ -96,25 +104,26 @@ const Header = ({ className }) => {
                               className="flex items-center gap-2 font-light"
                               to={"/settings"}
                             >
-                              <Settings /> <span>settings</span>
+                              <Settings />{" "}
+                              <span>{isEnglish ? "Setting" : "সেটিং"}</span>
                             </Link>
                           </li>
                           <hr className="border-primary-foreground" />
                           <li>
                             <Button
-                              className=""
+                              onClick={() => handleLogout()}
                               shape="none"
                               variant="none"
                               size="none"
                             >
-                              <LogOut /> <span>Logout</span>
+                              <LogOut />{" "}
+                              <span>{isEnglish ? "Logout" : "লগ আউট"}</span>
                             </Button>
                           </li>
                         </ul>
                       </div>
                     </DropdownContent>
                   </Dropdown>
-                  {/* <Button></Button> */}
                 </div>
               </div>
             </div>

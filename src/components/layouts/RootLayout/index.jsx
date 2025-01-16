@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 
 const RootLayout = () => {
-  const { user, setUserInfo } = useAuthenticationState();
-  const [isLoading, setIsLoading] = useState(false);
+  const { isLoading, user, setIsLoading, setUserInfo } =
+    useAuthenticationState();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
@@ -36,7 +36,7 @@ const RootLayout = () => {
           },
         };
         const response = await fetch(URLS.baseURL + "/app/user/info", settings);
-        const data = await response.json();
+        const data = await response?.json();
 
         if (data?.code === 200) {
           setUserInfo(data?.data || {});

@@ -1,8 +1,10 @@
+import authStorage from "@/utils/authStorage";
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
+  isLoading: false,
   isAuthenticated: false,
-  user: localStorage.getItem("authToken") || null,
+  user: authStorage.getAuthToken() || null,
   userInfo: {},
   loginPanel: "",
 };
@@ -12,21 +14,29 @@ export const authenticationSlice = createSlice({
   initialState,
   reducers: {
     login: (state, { payload }) => {
-      state.isAuthenticated = true;
       state.userInfo = payload;
+      state.isAuthenticated = true;
     },
+
     logout: (state) => {
-      state.isAuthenticated = false;
+      authStorage.removeAuthToken();
+      state.user = null;
       state.userInfo = {};
+      state.isAuthenticated = false;
+      state.loginPanel = "";
+    },
+
+    setIsLoading: (state, { payload }) => {
+      state.isLoading = payload;
     },
 
     setUser: (state, { payload }) => {
       if (payload) {
-        localStorage.setItem("authToken", payload);
+        authStorage.storeAuthToken(payload);
         state.user = payload;
         state.isAuthenticated = true;
       } else {
-        localStorage.removeItem("authToken");
+        authStorage.removeAuthToken();
         state.user = null;
         state.userInfo = {};
         state.isAuthenticated = false;
@@ -53,6 +63,7 @@ export const authenticationSlice = createSlice({
 export const {
   login,
   logout,
+  setIsLoading,
   setUser,
   setUserInfo,
   setLoginPanel,

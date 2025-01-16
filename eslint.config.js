@@ -1,5 +1,4 @@
 import js from "@eslint/js";
-import perfectionist from "eslint-plugin-perfectionist";
 import prettier from "eslint-plugin-prettier";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
@@ -18,15 +17,12 @@ export default [
         ecmaFeatures: { jsx: true },
       },
     },
-    settings: {
-      react: { version: "detect" },
-    },
+    settings: { react: { version: "detect" } },
     plugins: {
-      perfectionist,
-      prettier,
-      react,
+      react: react,
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
+      prettier: prettier,
     },
     rules: {
       ...js.configs.recommended.rules,
@@ -34,28 +30,15 @@ export default [
       ...react.configs["jsx-runtime"].rules,
       ...reactHooks.configs.recommended.rules,
       "no-undef": "error",
-      "no-console": "warn",
       "no-unused-vars": "warn",
-      "prettier/prettier": "error",
-      "react/jsx-no-target-blank": "off",
-      "react/jsx-uses-react": "off",
+      "no-console": "warn",
       "react/prop-types": "off",
+      "react/jsx-no-target-blank": "off",
       "react/react-in-jsx-scope": "off",
+      "react/jsx-uses-react": "off",
       "react-refresh/only-export-components": [
         "off",
         { allowConstantExport: true },
-      ],
-      "perfectionist/sort-jsx-props": [
-        "warn",
-        {
-          type: "natural",
-          order: "asc",
-          shorthandLast: true,
-        },
-      ],
-      "perfectionist/sort-objects": [
-        "warn",
-        { type: "natural", order: "asc" },
       ],
     },
   },

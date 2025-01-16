@@ -18,7 +18,7 @@ const SettingsPage = () => {
       <section>
         <div className="container space-y-4">
           <div className="dark space-y-2 rounded-md bg-primary p-4 text-primary-foreground">
-            <span className="font-semibold">
+            <span className="block font-semibold">
               {isEnglish ? "Select Language" : "ভাষা নির্বাচন"}
             </span>
             <div className="flex items-center gap-4">
@@ -50,7 +50,7 @@ const SettingsPage = () => {
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center justify-between gap-2"
               >
-                <span className="font-semibold">
+                <span className="block font-semibold">
                   {isEnglish ? "Change Password" : "পাসওয়ার্ড পরিবর্তন করুন"}
                 </span>
                 <div className="flex aspect-square shrink-0 items-center justify-center rounded-full bg-primary-foreground p-[0.125rem] text-primary">
@@ -66,7 +66,7 @@ const SettingsPage = () => {
                   <div className="py-4">
                     <form className="space-y-4">
                       <label className="block space-y-2">
-                        <span>
+                        <span className="text-sm">
                           {isEnglish ? "Old Password" : "পুরানো পাসওয়ার্ড"}
                         </span>
                         <FormControl
@@ -80,7 +80,7 @@ const SettingsPage = () => {
                         />
                       </label>
                       <label className="block space-y-2">
-                        <span>
+                        <span className="text-sm">
                           {isEnglish ? "New Password" : "নতুন পাসওয়ার্ড"}
                         </span>
                         <FormControl
@@ -93,7 +93,7 @@ const SettingsPage = () => {
                         />
                       </label>
                       <label className="block space-y-2">
-                        <span>
+                        <span className="text-sm">
                           {isEnglish
                             ? "Confirm Password"
                             : "নিশ্চিত পাসওয়ার্ড"}

@@ -4,23 +4,24 @@ import { Radio } from "@/components/ui/Radio";
 import URLS from "@/constants/urls";
 import useAuthenticationState from "@/hooks/state/useAuthenticationState";
 import useLanguageState from "@/hooks/state/useLanguageState";
-import { useSheikhSigninUserMutation } from "@/redux/services/sheikhApi";
-import { useSigninUserMutation } from "@/redux/services/zenithApi";
-import authStorage from "@/utils/authStorage";
+import {
+  useSheikhSigninUserMutation,
+  useZenithSigninUserMutation,
+} from "@/redux/services/tmsApi";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const SignInPage = () => {
-  const [mobileNumber, setMobileNumber] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [deviceName, setDeviceName] = useState("");
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedLoginType, setSelectedLoginType] = useState("bandhan");
+  const [userType, setUserType] = useState("bandhan");
 
-  const { setUser, setLoginPanel } = useAuthenticationState();
+  const { isLoading, setIsLoading, setUser, setLoginPanel } =
+    useAuthenticationState();
 
-  const [signinUser] = useSigninUserMutation();
+  const [signinZenithUser] = useZenithSigninUserMutation();
   const [sheikhSigninUser] = useSheikhSigninUserMutation();
 
   const { isEnglish } = useLanguageState();
@@ -74,8 +75,6 @@ const SignInPage = () => {
         deviceName = "Unknown Device";
       }
 
-      console.log(userAgent, brand, deviceName);
-
       setDeviceName(brand + "_" + deviceName);
     };
 
@@ -83,78 +82,93 @@ const SignInPage = () => {
   }, []);
 
   const handleLogin = async () => {
-    if (!mobileNumber || !password) {
+    if (!phone || !password) {
       alert(isEnglish ? "Please fill in all fields" : "সব তথ্য পূরণ করুন");
       return;
     }
+
     setIsLoading(true);
 
     try {
-      if (selectedLoginType === "bandhan") {
-        const settings = {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            phone: mobileNumber,
-            password: password,
-            version: "3.0.1",
-            model: deviceName,
-          }),
-        };
-
-        const response = await fetch(URLS.baseURL + "/app/login", settings);
-        const data = await response.json();
-
-        if (data?.code === 200) {
-          console.log(data);
-          const token = data?.payload?.auth_token;
-          setUser(token);
-          authStorage.storeAuthToken(token);
-          setLoginPanel("bandhan");
-          navigate("/", { replace: true });
-        } else {
-          setUser(null);
-          alert(data?.message || "Login failed");
-        }
-      } else if (selectedLoginType === "zenith") {
-        const { data } = await signinUser({
-          phone: mobileNumber,
-          password: password,
-        });
-        if (data?.message === "No User Found") {
-          alert(data?.message);
-          setIsLoading(false);
-        } else {
-          authStorage.storeAuthToken(data[0]._id);
-
-          setIsLoading(false);
-          setLoginPanel("zenith");
-          navigate("/", { replace: true });
-        }
-      } else if (selectedLoginType === "sheikh") {
-        const { data } = await sheikhSigninUser({
-          phone: mobileNumber,
-          password: password,
-        });
-
-        if (data?.message === "No User Found") {
-          alert(data?.message);
-          setIsLoading(false);
-        } else {
-          authStorage.storeAuthToken(data[0]._id);
-          setIsLoading(false);
-          setLoginPanel("sheikh");
-          navigate("/", { replace: true });
-        }
+      switch (userType) {
+        case "bandhan":
+          await handleBandhanLogin();
+          break;
+        case "zenith":
+          await handleZenithLogin();
+          break;
+        case "sheikh":
+          await handleSheikhLogin();
+          break;
+        default:
+          alert("Invalid login type");
       }
     } catch (error) {
       console.error("Error logging in:", error);
       alert("Error logging in, please try again");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleBandhanLogin = async () => {
+    const settings = {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        phone: phone,
+        password: password,
+        version: "3.0.1",
+        model: deviceName,
+      }),
+    };
+
+    const response = await fetch(URLS.baseURL + "/app/login", settings);
+    const data = await response?.json();
+
+    if (data?.code === 200) {
+      const token = data?.payload?.auth_token;
+      setUser(token);
+      setLoginPanel("bandhan");
+      navigate("/", { replace: true });
+    } else {
+      setUser(null);
+      alert(data?.message || "Login failed");
+    }
+  };
+
+  const handleZenithLogin = async () => {
+    const { data } = await signinZenithUser({
+      phone: phone,
+      password: password,
+    });
+
+    if (data?.message === "No User Found") {
+      alert(data?.message);
+      setIsLoading(false);
+    } else {
+      setUser(data?.[0]?._id);
+      setLoginPanel("zenith");
+      navigate("/", { replace: true });
+    }
+  };
+
+  const handleSheikhLogin = async () => {
+    const { data } = await sheikhSigninUser({
+      phone: phone,
+      password: password,
+    });
+
+    if (data?.message === "No User Found") {
+      alert(data?.message);
+      setIsLoading(false);
+    } else {
+      setUser(data?.[0]?._id);
+      setLoginPanel("sheikh");
+      navigate("/", { replace: true });
     }
   };
 
@@ -174,8 +188,8 @@ const SignInPage = () => {
                       type="radio"
                       name="loginType"
                       value={value}
-                      checked={selectedLoginType === value}
-                      onChange={() => setSelectedLoginType(value)}
+                      checked={userType === value}
+                      onChange={() => setUserType(value)}
                     />
                     <span>{labels[isEnglish ? "en" : "bn"]}</span>
                   </label>
@@ -187,8 +201,8 @@ const SignInPage = () => {
                 placeholder={
                   isEnglish ? "Enter Mobile Number" : "মোবাইল নম্বর লিখুন"
                 }
-                value={mobileNumber}
-                onChange={(e) => setMobileNumber(e.target.value)}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
               />
               <FormControl
                 className="rounded-full"
@@ -201,9 +215,9 @@ const SignInPage = () => {
                 <Button
                   className="w-full"
                   onClick={handleLogin}
-                  disabled={isLoading}
+                  isLoading={isLoading}
                 >
-                  {isLoading ? "Loading..." : isEnglish ? "Login" : "লগইন"}
+                  {isEnglish ? "Login" : "লগইন"}
                 </Button>
               </div>
             </div>

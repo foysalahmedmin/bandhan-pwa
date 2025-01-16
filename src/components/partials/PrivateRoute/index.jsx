@@ -1,10 +1,9 @@
-import { useContext } from "react";
+import useAuthenticationState from "@/hooks/state/useAuthenticationState";
 import { Navigate, useLocation } from "react-router-dom";
-import { AuthContext } from "../providers/AuthProvider";
 import RootLoading from "../RootLoading.jsx";
 
 const PrivateRoute = ({ children }) => {
-  const { user, loading } = useContext(AuthContext);
+  const { user, loading } = useAuthenticationState();
   const location = useLocation();
 
   if (loading) {
@@ -15,7 +14,9 @@ const PrivateRoute = ({ children }) => {
     return children;
   }
 
-  return <Navigate to="/login" state={{ from: location }} replace />;
+  return (
+    <Navigate to="/authentication/sign-in" state={{ from: location }} replace />
+  );
 };
 
 export default PrivateRoute;
