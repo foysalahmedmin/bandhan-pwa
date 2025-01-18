@@ -286,7 +286,7 @@ const RewardPage = () => {
               <span className="block font-semibold text-primary">
                 {isEnglish
                   ? "Select Incentive Code"
-                  : "ইন্সেন্টিভ নির্বাচন করুন কোড"}
+                  : "ইন্সেন্টিভ কোড নির্বাচন করুন"}
               </span>
               <div>
                 <label className="grid cursor-pointer grid-cols-4 items-center gap-2">

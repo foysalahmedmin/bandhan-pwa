@@ -1,11 +1,14 @@
+import { LocationProvider } from "./LocationProvider";
 import { ReduxProvider } from "./ReduxProvider";
-import { ThemeProvider } from "./ThemeProvider";
-
 
 const Providers = ({ children }) => {
-  return <>
-  <ReduxProvider><ThemeProvider>{children} </ThemeProvider></ReduxProvider>
-  </>;
+  return (
+    <>
+      <ReduxProvider>
+        <LocationProvider>{children}</LocationProvider>
+      </ReduxProvider>
+    </>
+  );
 };
 
 export default Providers;

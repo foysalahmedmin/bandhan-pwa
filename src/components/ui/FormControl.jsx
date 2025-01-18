@@ -8,7 +8,7 @@ const formControlVariants = cva("form-control", {
   variants: {
     variant: {
       default:
-        "form-control-variant-default focus-within:bg-light focus:bg-light active:bg-light text-light-foreground border-accent bg-light active-within:bg-light",
+        "form-control-variant-default focus-within:bg-light py-1 focus:bg-light active:bg-light text-light-foreground border-accent bg-light active-within:bg-light",
       gradient: "form-control-variant-gradient",
       outline: "form-control-variant-outline",
       ghost: "form-control-variant-ghost",

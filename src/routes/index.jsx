@@ -9,6 +9,8 @@ import ErrorPage from "@/pages/(partials)/ErrorPage";
 // Common Pages
 import SignInPage from "@/pages/(authentication)/SignInPage";
 import HomePage from "@/pages/(common)/HomePage";
+import LocationPage from "@/pages/(common)/LocationPage";
+import OutletPage from "@/pages/(common)/OutletPage";
 import RewardPage from "@/pages/(common)/RewardPage";
 import SettingsPage from "@/pages/(common)/SettingsPage";
 
@@ -35,6 +37,7 @@ export const routes = [
           },
           {
             path: "/call-status",
+            element: <OutletPage />,
           },
           {
             path: "/communication-pannel",
@@ -45,6 +48,7 @@ export const routes = [
           },
           {
             path: "/outlet-location-instruction",
+            element: <LocationPage />,
           },
           {
             path: "/eas-advocacy",

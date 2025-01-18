@@ -82,7 +82,7 @@ const Select = ({
         onClick={() => setIsOpen((prev) => true)}
         as="div"
         className={cn(
-          "form-control form-control-variant-default relative min-h-form-control overflow-visible",
+          "form-control form-control-variant-default relative h-auto min-h-form-control overflow-visible py-1",
           className,
         )}
       >
