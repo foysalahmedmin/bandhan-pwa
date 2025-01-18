@@ -5,37 +5,39 @@ import { useEffect, useState } from "react";
 import { FormControl } from "./FormControl";
 
 const TagInput = ({
-  classNameName,
+  className,
   inputClassName,
   setInputs: setInputsProp,
   inputs: inputsProp,
 }) => {
   const { isEnglish } = useLanguageState();
 
-  const [inputs, setInputs] = useState([]);
+  // State management
+  const [inputs, setInputs] = useState(inputsProp || []);
   const [input, setInput] = useState("");
 
+  // Handle adding a new tag
   const handleAddTag = () => {
     if (input) {
-      setInputs([...inputs, input]);
+      const updatedInputs = [...inputs, input];
+      setInputs(updatedInputs);
       if (setInputsProp) {
-        setInputsProp([...inputsProp, input]);
+        setInputsProp(updatedInputs);
       }
       setInput("");
     }
   };
 
+  // Handle removing a tag
   const handleRemoveTag = (indexToRemove) => {
-    setInputs(inputs.filter((_, index) => index !== indexToRemove));
+    const updatedInputs = inputs.filter((_, index) => index !== indexToRemove);
+    setInputs(updatedInputs);
     if (setInputsProp) {
-      if (inputsProp) {
-        setInputsProp(inputsProp.filter((_, index) => index !== indexToRemove));
-      } else {
-        setInputsProp(inputs.filter((_, index) => index !== indexToRemove));
-      }
+      setInputsProp(updatedInputs);
     }
   };
 
+  // Sync inputs prop with internal state
   useEffect(() => {
     if (inputsProp?.length) {
       setInputs(inputsProp);
@@ -43,7 +45,8 @@ const TagInput = ({
   }, [inputsProp]);
 
   return (
-    <div className={cn("space-y-2", classNameName)}>
+    <div className={cn("space-y-2", className)}>
+      {/* Tag input field */}
       <FormControl
         className={cn("", inputClassName)}
         value={input}
@@ -52,23 +55,30 @@ const TagInput = ({
         onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
         placeholder="Enter consumer numbers"
       />
+
+      {/* Instructions for adding tags */}
       <div className="mt-2 flex items-center">
-        <p className="text-primary">
+        <p className="text-xs font-semibold text-primary">
           {isEnglish
             ? "Please press "
             : "অনুগ্রহ করে আরও কনসিউমার নম্বর যোগ করতে কীবোর্ডে "}
-          <Check className="inline size-3" />
+          <Check className="inline size-4" strokeWidth={5} />
           {isEnglish ? "on keyboard to add more consumer number" : "প্রেস করুন"}
         </p>
       </div>
-      <div>
-        {inputs?.map((item, index) => (
+
+      {/* Render tags */}
+      <div className="flex flex-wrap items-center">
+        {inputs.map((item, index) => (
           <span
-            className="flex gap-1 rounded-full bg-primary p-1 text-xs leading-none text-primary-foreground"
+            className="flex items-center gap-1 rounded-full bg-primary px-2 py-1 text-xs leading-none text-primary-foreground"
             key={index}
           >
-            <span>{item}</span>
-            <X onClick={handleRemoveTag(item)} className="size-4" />
+            <span className="leading-none">{item}</span>
+            <X
+              onClick={() => handleRemoveTag(index)}
+              className="size-4 cursor-pointer"
+            />
           </span>
         ))}
       </div>
