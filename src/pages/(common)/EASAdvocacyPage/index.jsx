@@ -1,19 +1,16 @@
-import BrandSplitSection from "@/components/partials/Sections/BrandSplitSection";
-import PerformanceChartsSection from "@/components/partials/Sections/PerformanceChartsSection";
 import { Button } from "@/components/ui/Button";
 import { FormControl } from "@/components/ui/FormControl";
 import Select from "@/components/ui/Select";
+import TagInput from "@/components/ui/TagInput";
 import URLS from "@/constants/urls";
 import useAuthenticationState from "@/hooks/state/useAuthenticationState";
 import useLanguageState from "@/hooks/state/useLanguageState";
-import moment from "moment";
+import axios from "axios";
 import { useLayoutEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-const OutletPage = () => {
+const EASAdvocacyPage = () => {
   const { isEnglish } = useLanguageState();
   const { user, userInfo } = useAuthenticationState();
-  const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -22,12 +19,10 @@ const OutletPage = () => {
 
   const [outletDetails, setOutletDetails] = useState({});
 
-  const [startDate, setStartDate] = useState(
-    moment(new Date()).format("YYYY-MM-DD"),
-  );
-  const [endDate, setEndDate] = useState(
-    moment(new Date()).format("YYYY-MM-DD"),
-  );
+  const [brands, setBrands] = useState([]);
+  const [selectedBrand, setSelectedBrand] = useState({});
+
+  const [consumerNumbers, setConsumerNumbers] = useState([]);
 
   useLayoutEffect(() => {
     if (userInfo.outletCode) {
@@ -70,6 +65,65 @@ const OutletPage = () => {
     };
     getOutletDetails();
   }, [user, selectedOutlet?.value]);
+
+  useLayoutEffect(() => {
+    const getEasEntry = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get(URLS?.baseURL + `/api/eas/brand`);
+
+        if (response?.status === 200) {
+          setBrands(
+            response?.data?.map((item) => {
+              return { label: item?.name, value: item._id, ...item };
+            }) || [],
+          );
+        }
+      } catch (error) {
+        console.log("Error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    getEasEntry();
+  }, []);
+
+  const handleSubmit = async () => {
+    if (!selectedBrand?._id || !consumerNumbers) return;
+
+    try {
+      setIsLoading(true);
+
+      const payload = JSON.stringify({
+        currentBrand: selectedBrand?._id,
+        consumerNumbers: consumerNumbers,
+      });
+      var requestOptions = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: payload,
+      };
+      const response = await fetch(
+        URLS?.baseURL + `/api/eas/entry?code=${selectedOutlet?.value}`,
+        requestOptions,
+      );
+
+      const data = await response.json();
+      if (data.status === 200) {
+        setSelectedBrand({});
+        setConsumerNumbers([]);
+      } else {
+        alert(JSON.stringify(response.message));
+      }
+    } catch (error) {
+      const errorMessage = error?.response?.data?.error?.message;
+      alert(JSON.stringify(error));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <main>
@@ -168,92 +222,38 @@ const OutletPage = () => {
           <div className="space-y-2">
             <span className="block font-semibold text-primary">
               {isEnglish
-                ? "Select the start and end date to see the performance of this outlet"
-                : "এই আউটলেট এর পারফরমেন্স দেখতে শুরু ও শেষ এর তারিখ নির্বাচন করুন"}
+                ? "The brand that is contacted to EAS"
+                : "যে ব্র্যান্ডের EAS কে কন্টাক্ট করা হয়েছে"}
             </span>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid cursor-pointer items-center gap-2">
-              <span className="text-sm leading-none">
-                {isEnglish ? "Start Date" : "শুরুর তারিখ"}
-              </span>
-              <FormControl
-                onChange={(e) =>
-                  setStartDate(moment(e.target.value).format("YYYY-MM-DD"))
-                }
-                value={startDate}
-                as="input"
-                type="date"
-                className="justify-center overflow-visible text-center text-sm"
-              />
-            </div>
-            <div className="grid cursor-pointer items-center gap-2">
-              <span className="text-sm leading-none">
-                {isEnglish ? "End Date" : "শেষ তারিখ"}
-              </span>
-              <FormControl
-                onChange={(e) =>
-                  setEndDate(moment(e.target.value).format("YYYY-MM-DD"))
-                }
-                value={endDate}
-                as="input"
-                type="date"
-                className="justify-center overflow-visible text-center text-sm"
-              />
+            <div>
+              <label className="grid cursor-pointer grid-cols-4 items-center gap-2">
+                <span className="text-sm">
+                  {isEnglish ? "Brands" : "ব্রান্ডস"}
+                </span>
+                <Select
+                  className="col-span-3"
+                  value={selectedBrand}
+                  options={brands || []}
+                  onChange={(item) => {
+                    setSelectedBrand(item);
+                  }}
+                />
+              </label>
             </div>
           </div>
-
-          {!(selectedOutlet?.value && startDate && endDate) && (
-            <span className="text-sm text-muted-foreground">
-              {isEnglish
-                ? "Select an outlet and date range to view performance"
-                : "একটি আউটলেট এর সাথে শুরু ও শেষ তারিখ নির্বাচন করুন"}
+          <div className="space-y-2">
+            <span className="block font-semibold text-primary">
+              {isEnglish ? "Consumer Number" : "কনসিউমার নম্বর"}
             </span>
-          )}
-
-          {selectedOutlet?.value && startDate && endDate && (
-            <div className="space-y-2 border border-primary p-2">
-              <span className="block font-semibold text-primary">
-                {isEnglish ? "Performance Dashboard" : "পারফরমেন্স ড্যাশবোর্ড"}
-              </span>
-              <div>
-                <PerformanceChartsSection
-                  outletCode={selectedOutlet?.value}
-                  startDate={startDate}
-                  endDate={endDate}
-                />
-              </div>
-            </div>
-          )}
-
-          {selectedOutlet?.value && startDate && endDate && (
-            <div className="space-y-2 border border-primary p-2">
-              <span className="block font-semibold text-primary">
-                {isEnglish ? "IMS Brand Split" : "আইএমএস ব্র্যান্ড স্প্লিট"}
-              </span>
-              <div>
-                <BrandSplitSection
-                  outletCode={selectedOutlet?.value}
-                  startDate={startDate}
-                  endDate={endDate}
-                />
-              </div>
-            </div>
-          )}
-
+            <TagInput inputs={consumerNumbers} setInputs={setConsumerNumbers} />
+          </div>
           <div className="text-right">
             <Button
-              onClick={() =>
-                navigate("communication-video", {
-                  outletCode: outletDetails?.code,
-                  outletName: outletDetails?.name,
-                  communication: outletDetails?.communication?.file,
-                  salesPoint: selectedOutlet,
-                })
-              }
-              disabled={!selectedOutlet?.value || isLoading}
+              onClick={handleSubmit}
+              disabled={!selectedBrand?._id || !consumerNumbers || isLoading}
+              isLoading={isLoading}
             >
-              <span>{isEnglish ? "Call Card" : "কল কার্ড"}</span>
+              Submit
             </Button>
           </div>
         </div>
@@ -262,4 +262,4 @@ const OutletPage = () => {
   );
 };
 
-export default OutletPage;
+export default EASAdvocacyPage;

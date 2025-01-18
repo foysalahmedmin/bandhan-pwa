@@ -348,7 +348,12 @@ const RewardPage = () => {
                   </div>
                   {isEditable && (
                     <div className="text-right">
-                      <Button onClick={() => setIsModalOpen(true)}>Edit</Button>
+                      <Button
+                        onClick={() => setIsModalOpen(true)}
+                        isLoading={isLoading}
+                      >
+                        Edit
+                      </Button>
                     </div>
                   )}
                 </>
@@ -426,8 +431,8 @@ const RewardPage = () => {
                   {isEditable && (
                     <div className="text-right">
                       <Button
-                        isLoading={isLoading}
                         onClick={() => handleAddSubmit()}
+                        isLoading={isLoading}
                       >
                         Submit
                       </Button>

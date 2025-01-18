@@ -67,6 +67,7 @@ const Select = ({
     if (setValueProp) {
       setValueProp(value);
     }
+    setIsOpen(false);
   };
 
   useEffect(() => {
@@ -79,7 +80,7 @@ const Select = ({
     <>
       <FormControl
         ref={selectRef}
-        onClick={() => setIsOpen((prev) => true)}
+        onClick={() => setIsOpen(true)}
         as="div"
         className={cn(
           "form-control form-control-variant-default relative h-auto min-h-form-control overflow-visible py-1",

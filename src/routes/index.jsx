@@ -8,6 +8,7 @@ import ErrorPage from "@/pages/(partials)/ErrorPage";
 
 // Common Pages
 import SignInPage from "@/pages/(authentication)/SignInPage";
+import EASAdvocacyPage from "@/pages/(common)/EASAdvocacyPage";
 import HomePage from "@/pages/(common)/HomePage";
 import LocationPage from "@/pages/(common)/LocationPage";
 import OutletPage from "@/pages/(common)/OutletPage";
@@ -52,6 +53,7 @@ export const routes = [
           },
           {
             path: "/eas-advocacy",
+            element: <EASAdvocacyPage />,
           },
         ],
       },
