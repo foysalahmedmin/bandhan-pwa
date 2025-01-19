@@ -89,7 +89,8 @@ const EASAdvocacyPage = () => {
   }, []);
 
   const handleSubmit = async () => {
-    if (!selectedBrand?._id || !consumerNumbers) return;
+    if (!selectedOutlet?.value || !selectedBrand?._id || !consumerNumbers)
+      return;
 
     try {
       setIsLoading(true);
@@ -250,7 +251,11 @@ const EASAdvocacyPage = () => {
           <div className="text-right">
             <Button
               onClick={handleSubmit}
-              disabled={!selectedBrand?._id || !consumerNumbers || isLoading}
+              disabled={
+                !selectedOutlet?.value ||
+                !selectedBrand?._id ||
+                !consumerNumbers
+              }
               isLoading={isLoading}
             >
               Submit

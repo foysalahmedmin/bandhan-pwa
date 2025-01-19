@@ -10,7 +10,7 @@ import moment from "moment";
 import { useLayoutEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const OutletPage = () => {
+const CallStatusPage = () => {
   const { isEnglish } = useLanguageState();
   const { user, userInfo } = useAuthenticationState();
   const navigate = useNavigate();
@@ -262,4 +262,4 @@ const OutletPage = () => {
   );
 };
 
-export default OutletPage;
+export default CallStatusPage;

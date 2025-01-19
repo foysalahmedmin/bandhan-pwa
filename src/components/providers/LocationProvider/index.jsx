@@ -18,7 +18,6 @@ export const LocationProvider = ({ children }) => {
           const { latitude, longitude } = position.coords;
           const newLocation = { latitude, longitude };
 
-          // Update the state and save the location in localStorage
           setLocation(newLocation);
           localStorage.setItem("user-location", JSON.stringify(newLocation));
         },

@@ -1,11 +1,14 @@
 import { LocationProvider } from "./LocationProvider";
+import { NotificationsProvider } from "./NotificationsProvider";
 import { ReduxProvider } from "./ReduxProvider";
 
 const Providers = ({ children }) => {
   return (
     <>
       <ReduxProvider>
-        <LocationProvider>{children}</LocationProvider>
+        <NotificationsProvider>
+          <LocationProvider>{children}</LocationProvider>
+        </NotificationsProvider>
       </ReduxProvider>
     </>
   );

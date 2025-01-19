@@ -20,17 +20,21 @@ const labelsEn = {
   "/select-reward": "select reward",
   "/outlet-location-instruction": "outlet location instruction",
   "/eas-advocacy": "eas advocacy",
+  "/communication": "communication",
+  "/guideline": "guideline",
 };
 
 const labelsBn = {
   "/": "",
   "/settings": "সেটিংস",
-  "/notifications": "বিজ্ঞপ্তি",
+  "/notifications": "নোটিফিকেশনস",
   "/call-status": "কল স্ট্যাটাস",
-  "/communication-pannel": "যোগাযোগ প্যানেল",
+  "/communication-pannel": "কমিউনিকেশন প্যানেল",
   "/select-reward": "রিওয়ার্ড নির্বাচন",
   "/outlet-location-instruction": "আউটলেটের অবস্থানের নির্দেশনা",
   "/eas-advocacy": "ইএএস এডভোকেসি",
+  "/communication": "কমিউনিকেশন",
+  "/guideline": "গাইডলাইন",
 };
 
 const Header = ({ className }) => {
