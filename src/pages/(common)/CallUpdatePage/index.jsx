@@ -499,7 +499,7 @@ const CallUpdatePage = () => {
                   )}
                   <Button
                     onClick={handleShowLocation}
-                    className="h-auto min-h-button flex-wrap whitespace-normal py-1"
+                    className="h-auto min-h-button w-full flex-wrap whitespace-normal py-1"
                   >
                     <span>
                       {isEnglish
@@ -514,7 +514,6 @@ const CallUpdatePage = () => {
             {/* Submit Button */}
             <div className="flex justify-end">
               <Button onClick={handleSubmit} isLoading={isLoading}>
-                {isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
                 <span>{isEnglish ? "Submit" : "সাবমিট"}</span>
               </Button>
             </div>

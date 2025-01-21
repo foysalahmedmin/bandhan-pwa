@@ -21,7 +21,7 @@ const RootLayout = () => {
   }, []);
 
   useEffect(() => {
-    if (!isOnline) {
+    if (!isOnline || !user) {
       return;
     }
 

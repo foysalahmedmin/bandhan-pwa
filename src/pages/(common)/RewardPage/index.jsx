@@ -446,93 +446,93 @@ const RewardPage = () => {
       </main>
       <Modal isOpen={isModalOpen} setOpen={setIsModalOpen}>
         <ModalBackdrop />
-        <ModalContent
-          ModalContent
-          className="border-none bg-transparent px-container-inset"
-        >
-          <div className="w-full">
-            <div className="flex items-center justify-between gap-4">
-              <div></div>
-              <ModalCloseTrigger />
-            </div>
-            <div>
-              <>
-                <div className="space-y-2">
-                  <span className="block font-semibold text-primary">
-                    {isEnglish
-                      ? "Select Incentive"
-                      : "ইন্সেন্টিভ নির্বাচন করুন"}
-                  </span>
+        <ModalContent className="border-none bg-transparent px-container-inset">
+          <div className="rounded-md bg-card px-4 py-6">
+            <div className="w-full space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <span className="block flex-1 font-semibold text-primary">
+                  {isEnglish ? "Select Incentive" : "ইন্সেন্টিভ নির্বাচন করুন"}
+                </span>
+                <ModalCloseTrigger size="sm" className="rounded-full" />
+              </div>
+              <div className="space-y-4">
+                <>
                   <div className="space-y-2">
-                    <label className="grid cursor-pointer grid-cols-4 items-center gap-2">
-                      <span className="text-sm">
-                        {isEnglish ? "Incentive 1" : "ইন্সেন্টিভ ১"}
-                      </span>
-                      <div className="col-span-3">
-                        <Select
-                          className="h-20 w-full"
-                          options={
-                            incentive1Items?.map(
-                              ({ value, ...rest }, index) => {
-                                return {
-                                  value: value,
-                                  label: <RewardCard key={index} item={rest} />,
-                                };
-                              },
-                            ) || []
-                          }
-                          onChange={(e) => {
-                            return (
-                              setSelectedIncentive1(e.value),
-                              setSelectedIncentivePhoto1(
-                                e.image.uri.split(URLS?.incentiveMediaURL)[1],
-                              )
-                            );
-                          }}
-                        />
-                      </div>
-                    </label>
-                    <label className="grid cursor-pointer grid-cols-4 items-center gap-2">
-                      <span className="text-sm">
-                        {isEnglish ? "Incentive 2" : "ইন্সেন্টিভ ২"}
-                      </span>
-                      <div className="col-span-3">
-                        <Select
-                          className="h-20 w-full"
-                          options={
-                            incentive2Items?.map(
-                              ({ value, ...rest }, index) => {
-                                return {
-                                  value: value,
-                                  label: <RewardCard key={index} item={rest} />,
-                                };
-                              },
-                            ) || []
-                          }
-                          onChange={(e) => {
-                            return (
-                              setSelectedIncentive2(e.value),
-                              setSelectedIncentivePhoto2(
-                                e.image.uri.split(URLS?.incentiveMediaURL)[1],
-                              )
-                            );
-                          }}
-                        />
-                      </div>
-                    </label>
+                    <div className="space-y-2">
+                      <label className="grid cursor-pointer grid-cols-4 items-center gap-2">
+                        <span className="text-sm">
+                          {isEnglish ? "Incentive 1" : "ইন্সেন্টিভ ১"}
+                        </span>
+                        <div className="col-span-3">
+                          <Select
+                            className="h-20 w-full"
+                            options={
+                              incentive1Items?.map(
+                                ({ value, ...rest }, index) => {
+                                  return {
+                                    value: value,
+                                    label: (
+                                      <RewardCard key={index} item={rest} />
+                                    ),
+                                  };
+                                },
+                              ) || []
+                            }
+                            onChange={(e) => {
+                              return (
+                                setSelectedIncentive1(e.value),
+                                setSelectedIncentivePhoto1(
+                                  e.image.uri.split(URLS?.incentiveMediaURL)[1],
+                                )
+                              );
+                            }}
+                          />
+                        </div>
+                      </label>
+                      <label className="grid cursor-pointer grid-cols-4 items-center gap-2">
+                        <span className="text-sm">
+                          {isEnglish ? "Incentive 2" : "ইন্সেন্টিভ ২"}
+                        </span>
+                        <div className="col-span-3">
+                          <Select
+                            className="h-20 w-full"
+                            options={
+                              incentive2Items?.map(
+                                ({ value, ...rest }, index) => {
+                                  return {
+                                    value: value,
+                                    label: (
+                                      <RewardCard key={index} item={rest} />
+                                    ),
+                                  };
+                                },
+                              ) || []
+                            }
+                            onChange={(e) => {
+                              return (
+                                setSelectedIncentive2(e.value),
+                                setSelectedIncentivePhoto2(
+                                  e.image.uri.split(URLS?.incentiveMediaURL)[1],
+                                )
+                              );
+                            }}
+                          />
+                        </div>
+                      </label>
+                    </div>
                   </div>
-                </div>
-                {isEditable && (
-                  <div className="text-right">
-                    <Button
-                      isLoading={isLoading}
-                      onClick={() => handleEditSubmit()}
-                    >
-                      Submit
-                    </Button>
-                  </div>
-                )}
-              </>
+                  {isEditable && (
+                    <div className="text-right">
+                      <Button
+                        isLoading={isLoading}
+                        onClick={() => handleEditSubmit()}
+                      >
+                        Submit
+                      </Button>
+                    </div>
+                  )}
+                </>
+              </div>
             </div>
           </div>
         </ModalContent>

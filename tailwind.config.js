@@ -12,6 +12,11 @@ const tailwindConfig = {
       padding: {
         DEFAULT: "var(--container-inset)",
       },
+      screens: {
+        sm: "640px",
+        md: "768px",
+        lg: "1024px",
+      },
     },
     extend: {
       screens: {

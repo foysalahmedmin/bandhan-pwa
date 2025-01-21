@@ -1,6 +1,5 @@
-import URLS from "@/constants/urls";
 import { createContext, useContext, useEffect, useState } from "react";
-import { io } from "socket.io-client";
+// import { io } from "socket.io-client";
 
 const NotificationsContext = createContext();
 
@@ -27,33 +26,33 @@ export const NotificationsProvider = ({ children }) => {
     loadStoredNotifications();
   }, []);
 
-  useEffect(() => {
-    const socket = io(URLS.baseURL);
+  // useEffect(() => {
+  //   const socket = io(URLS.baseURL);
 
-    const handleSocketEvents = () => {
-      socket.on("connect", () => {
-        console.log("Socket connected");
-      });
+  //   const handleSocketEvents = () => {
+  //     socket.on("connect", () => {
+  //       console.log("Socket connected");
+  //     });
 
-      socket.on("error", (error) => {
-        console.error("Socket error:", error);
-      });
+  //     socket.on("error", (error) => {
+  //       console.error("Socket error:", error);
+  //     });
 
-      socket.on("notification", (data) => {
-        handleNotifications((prevState) => [
-          ...prevState,
-          { ...data, viewed: false },
-        ]);
-        // playSampleSound();
-      });
-    };
+  //     socket.on("notification", (data) => {
+  //       handleNotifications((prevState) => [
+  //         ...prevState,
+  //         { ...data, viewed: false },
+  //       ]);
+  //       // playSampleSound();
+  //     });
+  //   };
 
-    handleSocketEvents();
+  //   handleSocketEvents();
 
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+  //   return () => {
+  //     socket.disconnect();
+  //   };
+  // }, []);
 
   useEffect(() => {
     localStorage.setItem("notifications", JSON.stringify(notifications));
