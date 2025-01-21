@@ -3,7 +3,6 @@ import { Radio } from "@/components/ui/Radio";
 import URLS from "@/constants/urls";
 import useLanguageState from "@/hooks/state/useLanguageState";
 import { useEffect, useState } from "react";
-import "react-image-lightbox/style.css";
 
 const PcmInputItem = ({ item, imagePath, outletCode, pcm, setPcm }) => {
   const { isEnglish } = useLanguageState();
