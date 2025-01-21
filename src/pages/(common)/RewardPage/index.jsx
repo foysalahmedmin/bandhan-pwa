@@ -280,7 +280,7 @@ const RewardPage = () => {
   return (
     <>
       <main>
-        <section>
+        <section className="py-4">
           <div className="container space-y-4">
             <div className="space-y-2">
               <span className="block font-semibold text-primary">
@@ -446,7 +446,10 @@ const RewardPage = () => {
       </main>
       <Modal isOpen={isModalOpen} setOpen={setIsModalOpen}>
         <ModalBackdrop />
-        <ModalContent>
+        <ModalContent
+          ModalContent
+          className="border-none bg-transparent px-container-inset"
+        >
           <div className="w-full">
             <div className="flex items-center justify-between gap-4">
               <div></div>

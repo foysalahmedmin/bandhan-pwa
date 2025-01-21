@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import PannelCard from "@/components/partials/Cards/PannelCard";
 import URLS from "@/constants/urls";
 import useAuthenticationState from "@/hooks/state/useAuthenticationState";
+import useLanguageState from "@/hooks/state/useLanguageState";
 
 const GuidelinePage = () => {
   const { user } = useAuthenticationState();
+  const { isEnglish } = useLanguageState();
 
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -60,7 +62,7 @@ const GuidelinePage = () => {
 
   return (
     <main>
-      <section>
+      <section className="py-4">
         <div className="container space-y-4">
           {data?.length > 0 ? (
             <ul className="space-y-2">
@@ -71,7 +73,9 @@ const GuidelinePage = () => {
               ))}
             </ul>
           ) : (
-            <p>No Data Found</p>
+            <p className="text-center text-muted-foreground">
+              {isEnglish ? "No data found" : "কোন ডেটা পাওয়া যায়নি"}
+            </p>
           )}
         </div>
       </section>

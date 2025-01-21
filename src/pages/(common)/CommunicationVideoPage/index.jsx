@@ -7,7 +7,7 @@ const CommunicationVideoPage = () => {
   return (
     <div>
       <section>
-        <div className="container">
+        <div className="container flex min-h-screen-minus-header items-center py-4">
           <ViewItem state={routeLocation?.state || {}} />
         </div>
       </section>

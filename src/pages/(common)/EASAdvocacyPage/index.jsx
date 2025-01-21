@@ -128,7 +128,7 @@ const EASAdvocacyPage = () => {
 
   return (
     <main>
-      <section>
+      <section className="py-4">
         <div className="container space-y-4">
           <div className="space-y-2">
             <span className="block font-semibold text-primary">

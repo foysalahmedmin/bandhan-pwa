@@ -175,7 +175,7 @@ const SignInPage = () => {
   return (
     <main>
       <section>
-        <div className="gird container h-screen place-content-center text-center">
+        <div className="gird container h-screen place-content-center py-4 text-center">
           <div className="space-y-4">
             <div className="flex items-center justify-center">
               <img className="h-40 object-contain" src="/logo.png" alt="logo" />

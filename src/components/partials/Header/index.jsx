@@ -24,6 +24,8 @@ const labelsEn = {
   "/eas-advocacy": "eas advocacy",
   "/communication": "communication",
   "/guideline": "guideline",
+  "/distribution-status": "distribution status",
+  "/distribution-incentive": "distribution incentive",
 };
 
 const labelsBn = {
@@ -39,6 +41,8 @@ const labelsBn = {
   "/eas-advocacy": "ইএএস এডভোকেসি",
   "/communication": "কমিউনিকেশন",
   "/guideline": "গাইডলাইন",
+  "/distribution-status": "ডিস্ট্রিবিউশন স্ট্যাটাস",
+  "/distribution-incentive": "ইন্সেন্টিভ ডিস্ট্রিবিউশন",
 };
 
 const Header = ({ className }) => {

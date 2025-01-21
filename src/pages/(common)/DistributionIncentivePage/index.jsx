@@ -175,7 +175,7 @@ export default function DistributionIncentivePage() {
 
   return (
     <main>
-      <section>
+      <section className="py-4">
         <div className="container">
           <div className="space-y-4">
             <div className="space-y-2">

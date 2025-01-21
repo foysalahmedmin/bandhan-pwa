@@ -15,7 +15,7 @@ const SettingsPage = () => {
 
   return (
     <main>
-      <section>
+      <section className="py-4">
         <div className="container space-y-4">
           <div className="dark space-y-2 rounded-md bg-primary p-4 text-primary-foreground">
             <span className="block font-semibold">

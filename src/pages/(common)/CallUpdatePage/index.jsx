@@ -250,7 +250,7 @@ const CallUpdatePage = () => {
 
   return (
     <div className="min-h-screen">
-      <section>
+      <section className="py-4">
         <div className="container space-y-4">
           <>
             {/* Stock Input Section */}

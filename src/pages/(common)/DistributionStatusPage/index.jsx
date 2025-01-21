@@ -10,7 +10,7 @@ const DistributionStatusPage = ({ location }) => {
 
   return (
     <main>
-      <section>
+      <section className="py-4">
         <div className="container">
           {pdfLink !== undefined ? (
             <div className="space-y-2 rounded-md bg-gray-100">

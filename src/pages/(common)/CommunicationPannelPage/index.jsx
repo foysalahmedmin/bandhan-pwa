@@ -24,7 +24,7 @@ const CommunicationPannelPage = () => {
   ];
   return (
     <main>
-      <section>
+      <section className="py-4">
         <div className="container">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
             {data?.map(({ labels, path, icon }, index) => (

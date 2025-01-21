@@ -57,67 +57,61 @@ export default function ViewItem({ state }) {
   }, []);
 
   return (
-    <main className="flex min-h-screen-minus-header items-center">
-      <section className="w-full">
-        <div className="container w-full">
-          <div className="w-full overflow-hidden rounded-md border border-primary">
-            <div className="w-full bg-primary text-center text-primary-foreground">
-              <strong className="w-full py-2 text-primary-foreground">
-                {isEnglish ? "View" : "দেখুন"}
-              </strong>
-            </div>
+    <div className="w-full overflow-hidden rounded-md border border-primary">
+      <div className="w-full bg-primary text-center text-primary-foreground">
+        <strong className="w-full py-2 text-primary-foreground">
+          {isEnglish ? "View" : "দেখুন"}
+        </strong>
+      </div>
 
-            {play && (
-              <div className="space-y-2 p-2">
-                <div className="mx-auto aspect-square max-h-80 max-w-full rounded-md bg-dark">
-                  {(() => {
-                    switch (type) {
-                      case "Video":
-                        return (
-                          <video
-                            className="mx-auto h-full max-h-full max-w-full"
-                            controls
-                            src={URLS.baseMediaURL + data?.file}
-                          />
-                        );
-                      case "Audio":
-                        return (
-                          <audio
-                            controls
-                            className="mx-auto h-full max-h-full max-w-full"
-                            src={URLS.baseMediaURL + data?.file}
-                          >
-                            Your browser does not support the audio element.
-                          </audio>
-                        );
-                      case "Photo":
-                        return (
-                          <img
-                            src={URLS?.baseMediaURL + data?.file}
-                            alt="Media Content"
-                            className="mx-auto h-full max-h-full max-w-full object-cover object-center"
-                          />
-                        );
-                      default:
-                        return <></>;
-                    }
-                  })()}
-                </div>
+      {play && (
+        <div className="space-y-2 p-2">
+          <div className="mx-auto aspect-square max-h-80 max-w-full rounded-md bg-dark">
+            {(() => {
+              switch (type) {
+                case "Video":
+                  return (
+                    <video
+                      className="mx-auto h-full max-h-full max-w-full"
+                      controls
+                      src={URLS.baseMediaURL + data?.file}
+                    />
+                  );
+                case "Audio":
+                  return (
+                    <audio
+                      controls
+                      className="mx-auto h-full max-h-full max-w-full"
+                      src={URLS.baseMediaURL + data?.file}
+                    >
+                      Your browser does not support the audio element.
+                    </audio>
+                  );
+                case "Photo":
+                  return (
+                    <img
+                      src={URLS?.baseMediaURL + data?.file}
+                      alt="Media Content"
+                      className="mx-auto h-full max-h-full max-w-full object-cover object-center"
+                    />
+                  );
+                default:
+                  return <></>;
+              }
+            })()}
+          </div>
 
-                <div className="text-right">
-                  {showSkipButton ? (
-                    <Button onClick={handleSkip}>
-                      {isEnglish ? "Skip" : "স্কিপ"}
-                    </Button>
-                  ) : (
-                    <Button disabled>{timer}s</Button>
-                  )}
-                </div>
-              </div>
+          <div className="text-right">
+            {showSkipButton ? (
+              <Button onClick={handleSkip}>
+                {isEnglish ? "Skip" : "স্কিপ"}
+              </Button>
+            ) : (
+              <Button disabled>{timer}s</Button>
             )}
           </div>
         </div>
-      </section>
-    </main>
+      )}
+    </div>
   );
 }

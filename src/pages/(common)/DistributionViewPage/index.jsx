@@ -7,7 +7,7 @@ const DistributionViewPage = () => {
 
   return (
     <main>
-      <section>
+      <section className="py-4">
         <div className="container">
           <div className="flex items-center justify-center">
             <div className="mx-auto w-full max-w-4xl">

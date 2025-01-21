@@ -30,7 +30,7 @@ const NotificationsPage = () => {
 
   return (
     <main>
-      <section>
+      <section className="py-4">
         <div className="container space-y-4">
           {notifications.length > 0 ? (
             <>
@@ -50,9 +50,9 @@ const NotificationsPage = () => {
               </div>
             </>
           ) : (
-            <>
-              <span>No Notifications Found</span>
-            </>
+            <p className="text-center text-muted-foreground">
+              {isEnglish ? "No data found" : "কোন ডেটা পাওয়া যায়নি"}
+            </p>
           )}
         </div>
       </section>
