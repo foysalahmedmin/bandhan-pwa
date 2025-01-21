@@ -66,7 +66,7 @@ const modalContentVariants = cva("modal-content", {
   defaultVariants: {
     variant: "default",
     size: "sm",
-    side: "left",
+    side: "center",
   },
 });
 

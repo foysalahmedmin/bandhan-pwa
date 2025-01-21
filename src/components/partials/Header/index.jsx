@@ -16,6 +16,8 @@ const labelsEn = {
   "/settings": "settings",
   "/notifications": "notifications",
   "/call-status": "call status",
+  "/call-update": "call update",
+  "/communication-video": "communication video",
   "/communication-pannel": "communication pannel",
   "/select-reward": "select reward",
   "/outlet-location-instruction": "outlet location instruction",
@@ -29,6 +31,8 @@ const labelsBn = {
   "/settings": "সেটিংস",
   "/notifications": "নোটিফিকেশনস",
   "/call-status": "কল স্ট্যাটাস",
+  "/call-update": "কল আপডেট",
+  "/communication-video": "কমিউনিকেশন ভিডিও",
   "/communication-pannel": "কমিউনিকেশন প্যানেল",
   "/select-reward": "রিওয়ার্ড নির্বাচন",
   "/outlet-location-instruction": "আউটলেটের অবস্থানের নির্দেশনা",
@@ -59,7 +63,12 @@ const Header = ({ className }) => {
 
   return (
     <>
-      <nav className={cn("sticky top-0 z-50 h-header w-full", className)}>
+      <nav
+        className={cn(
+          "sticky top-0 z-50 h-header w-full bg-[#f5dbd5]",
+          className,
+        )}
+      >
         <div className="size-full">
           <div className="container h-full">
             <div className="relative flex h-full items-center justify-between gap-[1em] lg:gap-[1.5em]">

@@ -80,14 +80,17 @@ const Select = ({
     <>
       <FormControl
         ref={selectRef}
-        onClick={() => setIsOpen(true)}
         as="div"
         className={cn(
-          "form-control form-control-variant-default relative h-auto min-h-form-control overflow-visible py-1",
+          "form-control form-control-variant-default relative h-auto min-h-form-control overflow-visible",
           className,
         )}
+        {...props}
       >
-        <div className="flex w-full items-center justify-between gap-2">
+        <div
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex size-full items-center justify-between gap-2 py-1"
+        >
           <div>{value?.label || placeholder}</div>
           <ChevronRight
             className={cn("text-6 transition-all duration-300", {

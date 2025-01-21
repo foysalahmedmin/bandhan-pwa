@@ -116,7 +116,7 @@ const PannelCard = ({ item, index }) => {
           <ModalContent className="border-none bg-transparent px-container-inset">
             <div className="rounded-md bg-card px-4 py-6">
               <div className="space-y-4">
-                <div className="mx-auto h-64 w-full max-w-96 rounded-md bg-dark">
+                <div className="mx-auto aspect-square max-h-80 max-w-full rounded-md bg-dark">
                   {modalItem?.fileType === "png" ||
                   modalItem?.fileType === "jpg" ? (
                     <img
@@ -128,7 +128,7 @@ const PannelCard = ({ item, index }) => {
                     <video
                       src={modalItem?.file}
                       controls
-                      className="mx-auto h-full max-h-full max-w-full rounded border"
+                      className="mx-auto h-full max-h-full max-w-full"
                     ></video>
                   )}
                 </div>

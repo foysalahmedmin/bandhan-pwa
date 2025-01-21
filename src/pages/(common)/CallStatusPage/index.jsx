@@ -244,11 +244,13 @@ const CallStatusPage = () => {
           <div className="text-right">
             <Button
               onClick={() =>
-                navigate("communication-video", {
-                  outletCode: outletDetails?.code,
-                  outletName: outletDetails?.name,
-                  communication: outletDetails?.communication?.file,
-                  salesPoint: selectedOutlet,
+                navigate(`/communication-video`, {
+                  state: {
+                    outletCode: outletDetails?.code,
+                    outletName: outletDetails?.name,
+                    communication: outletDetails?.communication?.file,
+                    salesPoint: selectedOutlet,
+                  },
                 })
               }
               disabled={!selectedOutlet?.value || isLoading}
