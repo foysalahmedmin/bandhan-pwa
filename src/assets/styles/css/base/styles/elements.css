@@ -24,6 +24,9 @@ body {
   scroll-behavior: smooth;
   color: theme("colors.foreground");
 }
+main {
+  @apply py-4;
+}
 
 h1,
 h2,

@@ -62,13 +62,17 @@ const GuidelinePage = () => {
     <main>
       <section>
         <div className="container space-y-4">
-          <ul className="space-y-2">
-            {data?.map((item, index) => (
-              <li key={index}>
-                <PannelCard item={item} index={index} />
-              </li>
-            ))}
-          </ul>
+          {data?.length > 0 ? (
+            <ul className="space-y-2">
+              {data?.map((item, index) => (
+                <li key={index}>
+                  <PannelCard item={item} index={index} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No Data Found</p>
+          )}
         </div>
       </section>
     </main>

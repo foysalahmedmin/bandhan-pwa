@@ -8,14 +8,13 @@ import Loading from "../../Loading";
 
 const PannelCard = ({ item, index }) => {
   const [isOpen, setInOpen] = useState(false);
-  const [data, setData] = useState({});
+
+  const [modalItem, setModalItem] = useState({});
+  const [storedData, setStoredData] = useState({});
+  const [showDownloadBtn, setShowDownloadBtn] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const filePath = URLS.baseMediaURL + item?.file;
-
-  // const showDownloadBtn = !data?.file;
-  const showDownloadBtn = false;
-
   const dateData = new Date(item?.date);
   const dateString = dateData.toDateString();
   const timeString = dateData.toLocaleTimeString();
@@ -25,12 +24,16 @@ const PannelCard = ({ item, index }) => {
       const downloaded = localStorage.getItem(item?.file);
       const data = downloaded ? JSON.parse(downloaded) : null;
 
-      if (data?.file) {
+      if (data) {
         if (data?.fileType === "mp4" && data?.file) {
-          setData(data);
+          const blob = data?.file;
+          const url = URL.createObjectURL(blob);
+          setStoredData({ file: url, fileType: item?.fileType });
         } else {
-          setData(data);
+          setStoredData(data);
         }
+      } else {
+        setShowDownloadBtn(true);
       }
     };
     checkIfDownloaded();
@@ -46,10 +49,12 @@ const PannelCard = ({ item, index }) => {
       // Store the blob URL in localStorage
       localStorage.setItem(
         item?.file,
-        JSON.stringify({ blob, file: url, fileType: item?.fileType }),
+        JSON.stringify({ file: blob, fileType: item?.fileType }),
       );
 
-      setData({ blob, file: url, fileType: item?.fileType });
+      setStoredData({ file: url, fileType: item?.fileType });
+      setShowDownloadBtn(false);
+      setIsDownloading(false);
       alert(
         `${item?.fileType === "mp4" ? "Video" : "Image"} downloaded successfully.`,
       );
@@ -59,6 +64,11 @@ const PannelCard = ({ item, index }) => {
     } finally {
       setIsDownloading(false);
     }
+  };
+
+  const handleView = () => {
+    setInOpen(true);
+    setModalItem(storedData);
   };
 
   return (
@@ -92,8 +102,8 @@ const PannelCard = ({ item, index }) => {
             {isDownloading ? "Downloading..." : "Download"}
           </Button>
         ) : (
-          <Button onClick={() => setInOpen(true)}>
-            {data?.fileType === "png" || data?.fileType === "jpg"
+          <Button onClick={handleView}>
+            {storedData?.fileType === "png" || storedData?.fileType === "jpg"
               ? "View"
               : "Play"}
           </Button>
@@ -107,15 +117,16 @@ const PannelCard = ({ item, index }) => {
             <div className="rounded-md bg-card px-4 py-6">
               <div className="space-y-4">
                 <div className="mx-auto aspect-square max-h-80 max-w-full rounded-md bg-dark">
-                  {data?.fileType === "png" || data?.fileType === "jpg" ? (
+                  {modalItem?.fileType === "png" ||
+                  modalItem?.fileType === "jpg" ? (
                     <img
-                      src={filePath}
+                      src={modalItem?.file}
                       alt="Modal Content"
                       className="mx-auto h-full max-h-full max-w-full object-cover object-center"
                     />
                   ) : (
                     <video
-                      src={filePath}
+                      src={modalItem?.file}
                       controls
                       className="mx-auto h-full max-h-full max-w-full"
                     ></video>

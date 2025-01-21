@@ -93,7 +93,7 @@ export default function ViewItem({ state }) {
                       case "Photo":
                         return (
                           <img
-                            src={URLS.baseMediaURL + data?.file}
+                            src={URLS?.baseMediaURL + data?.file}
                             alt="Media Content"
                             className="mx-auto h-full max-h-full max-w-full object-cover object-center"
                           />
