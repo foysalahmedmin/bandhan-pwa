@@ -25,9 +25,9 @@ const RewardCard = ({ item, className, ...props }) => {
       )}
       {...props}
     >
-      <div className="flex items-center justify-center overflow-hidden text-center">
+      <div className="flex h-full w-full items-center justify-center overflow-hidden text-center">
         <img
-          className="h-full max-h-full max-w-full object-contain object-center"
+          className="size-full object-contain object-center"
           src={image}
           alt="incentive photo"
         />
@@ -114,7 +114,7 @@ const RewardPage = () => {
             return {
               value: item?.name || "",
               label: item?.name || "",
-              image: { uri: URLS?.incentiveMediaURL + `${item.photo}` },
+              image: URLS?.incentiveMediaURL + `${item.photo}`,
             };
           }) || []
         );
@@ -444,7 +444,7 @@ const RewardPage = () => {
           </div>
         </section>
       </main>
-      <Modal isOpen={isModalOpen} setOpen={setIsModalOpen}>
+      <Modal isOpen={isModalOpen} setIsOpen={setIsModalOpen}>
         <ModalBackdrop />
         <ModalContent className="border-none bg-transparent px-container-inset">
           <div className="rounded-md bg-card px-4 py-6">

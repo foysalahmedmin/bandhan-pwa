@@ -1,26 +1,8 @@
 import { useClickOutside } from "@/hooks/ui/useClickOutside";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
-import {
-  Children,
-  isValidElement,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { FormControl } from "./FormControl";
-
-const extractTextFromJSX = (jsx) => {
-  if (typeof jsx === "string") return jsx;
-  if (typeof jsx === "number") return jsx?.toString();
-  if (isValidElement(jsx)) {
-    return Children?.map(jsx.props.children, extractTextFromJSX)
-      .filter(Boolean)
-      .join(" ");
-  }
-  return "";
-};
 
 const Select = ({
   className,
@@ -41,7 +23,6 @@ const Select = ({
   const selectRef = useRef(null);
   const [value, setValue] = useState(valueProp);
   const [searchValue, setSearchValue] = useState("");
-
   const [isOpen, setIsOpen] = useState(false);
 
   useImperativeHandle(ref, () => selectRef.current);
@@ -51,9 +32,7 @@ const Select = ({
     options?.length > 0
       ? options?.filter((option) => {
           const label =
-            typeof option?.label === "string"
-              ? option?.label
-              : extractTextFromJSX(option.label);
+            typeof option?.label === "string" ? option?.label : option?.value;
 
           return label?.toLowerCase()?.includes(searchValue.toLowerCase());
         })

@@ -4,6 +4,7 @@ import {
   GiftBox,
   LocationPin,
   Podcast,
+  Survey,
 } from "@/assets/svg/home-page";
 import useLanguageState from "@/hooks/state/useLanguageState";
 import { Link } from "react-router-dom";
@@ -49,6 +50,14 @@ const HomePage = () => {
       labels: {
         en: "EAS Advocacy",
         bn: "ইএএস এডভোকেসি",
+      },
+    },
+    {
+      path: "/outlet-survey",
+      icon: <Survey className="size-full" />,
+      labels: {
+        en: "Outlet Survey",
+        bn: "আউটলেট সার্ভে",
       },
     },
   ];

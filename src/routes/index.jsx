@@ -21,6 +21,7 @@ import GuidelinePage from "@/pages/(common)/GuidelinePage";
 import HomePage from "@/pages/(common)/HomePage";
 import LocationPage from "@/pages/(common)/LocationPage";
 import NotificationsPage from "@/pages/(common)/NotificationPage";
+import OutletSurveyPage from "@/pages/(common)/OutletSurveyPage";
 import RewardPage from "@/pages/(common)/RewardPage";
 import SettingsPage from "@/pages/(common)/SettingsPage";
 
@@ -73,6 +74,10 @@ export const routes = [
           {
             path: "/eas-advocacy",
             element: <EASAdvocacyPage />,
+          },
+          {
+            path: "/outlet-survey",
+            element: <OutletSurveyPage />,
           },
           {
             path: "/communication",

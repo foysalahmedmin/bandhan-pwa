@@ -11,38 +11,67 @@ import { cn } from "@/lib/utils";
 import { ArrowLeft, EllipsisVertical, LogOut, Settings } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-const labelsEn = {
-  "/": "",
-  "/settings": "settings",
-  "/notifications": "notifications",
-  "/call-status": "call status",
-  "/call-update": "call update",
-  "/communication-video": "communication video",
-  "/communication-pannel": "communication pannel",
-  "/select-reward": "select reward",
-  "/outlet-location-instruction": "outlet location instruction",
-  "/eas-advocacy": "eas advocacy",
-  "/communication": "communication",
-  "/guideline": "guideline",
-  "/distribution-status": "distribution status",
-  "/distribution-incentive": "distribution incentive",
-};
-
-const labelsBn = {
-  "/": "",
-  "/settings": "সেটিংস",
-  "/notifications": "নোটিফিকেশনস",
-  "/call-status": "কল স্ট্যাটাস",
-  "/call-update": "কল আপডেট",
-  "/communication-video": "কমিউনিকেশন ভিডিও",
-  "/communication-pannel": "কমিউনিকেশন প্যানেল",
-  "/select-reward": "রিওয়ার্ড নির্বাচন",
-  "/outlet-location-instruction": "আউটলেটের অবস্থানের নির্দেশনা",
-  "/eas-advocacy": "ইএএস এডভোকেসি",
-  "/communication": "কমিউনিকেশন",
-  "/guideline": "গাইডলাইন",
-  "/distribution-status": "ডিস্ট্রিবিউশন স্ট্যাটাস",
-  "/distribution-incentive": "ইন্সেন্টিভ ডিস্ট্রিবিউশন",
+const labels = {
+  "/": {
+    en: "",
+    bn: "",
+  },
+  "/settings": {
+    en: "settings",
+    bn: "সেটিংস",
+  },
+  "/notifications": {
+    en: "notifications",
+    bn: "নোটিফিকেশনস",
+  },
+  "/call-status": {
+    en: "call status",
+    bn: "কল স্ট্যাটাস",
+  },
+  "/call-update": {
+    en: "call update",
+    bn: "কল আপডেট",
+  },
+  "/communication-video": {
+    en: "communication video",
+    bn: "কমিউনিকেশন ভিডিও",
+  },
+  "/communication-pannel": {
+    en: "communication pannel",
+    bn: "কমিউনিকেশন প্যানেল",
+  },
+  "/select-reward": {
+    en: "select reward",
+    bn: "রিওয়ার্ড নির্বাচন",
+  },
+  "/outlet-location-instruction": {
+    en: "outlet location instruction",
+    bn: "আউটলেটের অবস্থানের নির্দেশনা",
+  },
+  "/eas-advocacy": {
+    en: "eas advocacy",
+    bn: "ইএএস এডভোকেসি",
+  },
+  "/communication": {
+    en: "communication",
+    bn: "কমিউনিকেশন",
+  },
+  "/guideline": {
+    en: "guideline",
+    bn: "গাইডলাইন",
+  },
+  "/distribution-status": {
+    en: "distribution status",
+    bn: "ডিস্ট্রিবিউশন স্ট্যাটাস",
+  },
+  "/distribution-incentive": {
+    en: "distribution incentive",
+    bn: "ইন্সেন্টিভ ডিস্ট্রিবিউশন",
+  },
+  "/outlet-survey": {
+    en: "outlet survey",
+    bn: "আউটলেট সার্ভে",
+  },
 };
 
 const Header = ({ className }) => {
@@ -62,8 +91,9 @@ const Header = ({ className }) => {
     navigate("/authentication/sign-in");
   };
 
-  const labels = isEnglish ? labelsEn : labelsBn;
-  const label = labels[location?.pathname] || "";
+  const label = isEnglish
+    ? labels?.[location?.pathname]?.en || ""
+    : labels?.[location?.pathname]?.bn || "";
 
   return (
     <>

@@ -83,6 +83,26 @@ const DistributeVerticalCenter = forwardRef((props, ref) => {
 
 DistributeVerticalCenter.displayName = "DistributeVerticalCenter";
 
+const Survey = forwardRef((props, ref) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      ref={ref}
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M6 4v4h12V4h2.007c.548 0 .993.445.993.993v16.014a.994.994 0 0 1-.993.993H3.993A.993.993 0 0 1 3 21.007V4.993C3 4.445 3.445 4 3.993 4zm3 13H7v2h2zm0-3H7v2h2zm0-3H7v2h2zm7-9v4H8V2z"
+      />
+    </svg>
+  );
+});
+
+Survey.displayName = "Survey";
+
 const Podcast = forwardRef((props, ref) => {
   return (
     <svg
@@ -123,7 +143,7 @@ const Book = forwardRef((props, ref) => {
   );
 });
 
-Book.displayName = "Podcast";
+Book.displayName = "Book";
 
 export {
   Book,
@@ -132,4 +152,5 @@ export {
   GiftBox,
   LocationPin,
   Podcast,
+  Survey,
 };
