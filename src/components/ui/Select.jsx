@@ -1,6 +1,6 @@
 import { useClickOutside } from "@/hooks/ui/useClickOutside";
 import { cn } from "@/lib/utils";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { FormControl } from "./FormControl";
 
@@ -17,11 +17,12 @@ const Select = ({
   isRtl = false,
   isClearable = true,
   placeholder = "Select Options",
+  isMulti = false,
   ref,
   ...props
 }) => {
   const selectRef = useRef(null);
-  const [value, setValue] = useState(valueProp);
+  const [value, setValue] = useState(isMulti ? [] : null);
   const [searchValue, setSearchValue] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
@@ -38,15 +39,39 @@ const Select = ({
         })
       : [];
 
-  const onSelect = (value) => {
-    setValue(value);
+  const onSelect = (selectedOption) => {
+    if (isMulti) {
+      const newValue = value.includes(selectedOption)
+        ? value.filter((opt) => opt !== selectedOption)
+        : [...value, selectedOption];
+      setValue(newValue);
+      if (onChange) {
+        onChange(newValue);
+      }
+      if (setValueProp) {
+        setValueProp(newValue);
+      }
+    } else {
+      setValue(selectedOption);
+      if (onChange) {
+        onChange(selectedOption);
+      }
+      if (setValueProp) {
+        setValueProp(selectedOption);
+      }
+      setIsOpen(false);
+    }
+  };
+
+  const removeOption = (optionToRemove) => {
+    const newValue = value.filter((opt) => opt !== optionToRemove);
+    setValue(newValue);
     if (onChange) {
-      onChange(value);
+      onChange(newValue);
     }
     if (setValueProp) {
-      setValueProp(value);
+      setValueProp(newValue);
     }
-    setIsOpen(false);
   };
 
   useEffect(() => {
@@ -70,7 +95,29 @@ const Select = ({
           onClick={() => setIsOpen(!isOpen)}
           className="flex size-full items-center justify-between gap-2 py-1"
         >
-          <div>{value?.label || placeholder}</div>
+          <div className="flex flex-wrap gap-1">
+            {isMulti && value?.length > 0 ? (
+              value.map((option, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-1 rounded bg-title/10 px-2 py-1 text-sm"
+                >
+                  <span>{option.label}</span>
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeOption(option);
+                    }}
+                  />
+                </div>
+              ))
+            ) : (
+              <span>
+                {!isMulti ? value?.label || placeholder : placeholder}
+              </span>
+            )}
+          </div>
           <ChevronRight
             className={cn("text-6 transition-all duration-300", {
               "-rotate-90": isOpen,
@@ -92,7 +139,14 @@ const Select = ({
               <ul className="w-full">
                 {filteredOptions?.map((option, index) => (
                   <li
-                    className="cursor-pointer px-form-control py-1 text-sm hover:bg-title/5"
+                    className={cn(
+                      "cursor-pointer px-form-control py-1 text-sm hover:bg-title/5",
+                      {
+                        "bg-title/10": isMulti
+                          ? value.includes(option)
+                          : value === option,
+                      },
+                    )}
                     key={index}
                     onClick={() => onSelect(option)}
                   >
