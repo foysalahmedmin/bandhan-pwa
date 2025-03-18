@@ -5,192 +5,178 @@ import URLS from "@/constants/urls";
 import useAuthenticationState from "@/hooks/state/useAuthenticationState";
 import useLanguageState from "@/hooks/state/useLanguageState";
 import { useLayoutEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 const questions = [
   {
     question: "আপনি ভালো আছেন?",
     notes:
       "উত্তর হ্যাঁ হলে, টিএমএস পরের প্রশ্নে যাবে। উত্তর না হলে, টিএমএস ধন্যবাদ দিয়ে পরের সাক্ষাতের জন্য সময় নিয়ে নিবে এবং জরীপ শেষ করবে",
-    responses: [{ type: "option", options: ["Yes", "No"] }],
+    responses: { type: "option", options: ["Yes", "No"] },
   },
   {
     question: "আপনি কি জনাব (রিটেইলারের নাম)?",
     notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: [{ type: "option", options: ["Yes", "No"] }],
+    responses: { type: "option", options: ["Yes", "No"] },
   },
   {
     question:
       "বিসমিল্লাহ জেনারেল স্টোর (আউটলেট এর নাম) টিতে আপনি কি ভুমিকায় আছেন?",
     notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: [
-      {
-        type: "option",
-        options: [
-          "দোকানের মালিক",
-          "দোকান পরিচালনাকারী (যিনি কেনা-বেচা করেন)",
-          "দোকানের মালিক ও দোকান পরিচালনা",
-          "অন্যান্য",
-        ],
-      },
-    ],
+    responses: {
+      type: "option",
+      options: [
+        "দোকানের মালিক",
+        "দোকান পরিচালনাকারী (যিনি কেনা-বেচা করেন)",
+        "দোকানের মালিক ও দোকান পরিচালনা",
+        "অন্যান্য",
+      ],
+    },
   },
   {
     question: "আপনি কি বন্ধন প্রোগ্রামে যুক্ত আছেন?",
     notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: [{ type: "option", options: ["Yes", "No"] }],
+    responses: { type: "option", options: ["Yes", "No"] },
   },
   {
     question: "আপনি বন্ধনের পাশাপাশি অন্য কোন প্রোগ্রামে যুক্ত আছেন?",
     notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: [{ type: "option", options: ["Yes", "No"] }],
+    responses: { type: "option", options: ["Yes", "No"] },
   },
   {
     question: "আপনার দোকানে বর্তমানে কি কি ব্র্যান্ডের সিগারেট আছে?",
     notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: [
-      {
-        type: "multiple-option",
-        options: [
-          "Camel",
-          "Sheikh",
-          "Navy",
-          "Navy Option",
-          "K2",
-          "Real",
-          "Benson",
-          "Gold Leaf",
-          "Lucky Strike",
-          "Star",
-          "Derby",
-          "Hollywood",
-          "Pilot",
-          "Sunmoon",
-          "Marise",
-          "Marlboro",
-          "Others",
-        ],
-      },
-    ],
+    responses: {
+      type: "multiple-option",
+      options: [
+        "Camel",
+        "Sheikh",
+        "Navy",
+        "Navy Option",
+        "K2",
+        "Real",
+        "Benson",
+        "Gold Leaf",
+        "Lucky Strike",
+        "Star",
+        "Derby",
+        "Hollywood",
+        "Pilot",
+        "Sunmoon",
+        "Marise",
+        "Marlboro",
+        "Others",
+      ],
+    },
   },
   {
     question: "আপনার দোকানে সব থেকে বেশি বিক্রয় হয় কোন ব্র্যান্ডের সিগারেট?",
     notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: [
-      {
-        type: "option",
-        options: [
-          "Camel",
-          "Sheikh",
-          "Navy",
-          "Navy Option",
-          "K2",
-          "Real",
-          "Benson",
-          "Gold Leaf",
-          "Lucky Strike",
-          "Star",
-          "Derby",
-          "Hollywood",
-          "Pilot",
-          "Sunmoon",
-          "Marise",
-          "Marlboro",
-          "Others",
-        ],
-      },
-    ],
+    responses: {
+      type: "option",
+      options: [
+        "Camel",
+        "Sheikh",
+        "Navy",
+        "Navy Option",
+        "K2",
+        "Real",
+        "Benson",
+        "Gold Leaf",
+        "Lucky Strike",
+        "Star",
+        "Derby",
+        "Hollywood",
+        "Pilot",
+        "Sunmoon",
+        "Marise",
+        "Marlboro",
+        "Others",
+      ],
+    },
   },
   {
     question:
       "আপনার মতে উল্লেখিত সিগারেটটির কোন দিকটি সবচেয়ে বেশি ভালো লেগেছে। যার জন্য তার বিক্রয় বেশি হচ্ছে।",
     notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: [
-      {
-        type: "option",
-        options: [
-          "Taste",
-          "Pack design",
-          "Campaign/communication",
-          "Like the flavor",
-          "Stick design",
-          "Like it after capsule burst",
-          "Less draw effort/easy to draw",
-          "Strong filter construct",
-          "No irritation in throat",
-          "Like the capsule flavor",
-          "Liked the taste",
-          "Liked the smell",
-          "Other",
-          "Did not like anything in particular",
-        ],
-      },
-    ],
+    responses: {
+      type: "option",
+      options: [
+        "Taste",
+        "Pack design",
+        "Campaign/communication",
+        "Like the flavor",
+        "Stick design",
+        "Like it after capsule burst",
+        "Less draw effort/easy to draw",
+        "Strong filter construct",
+        "No irritation in throat",
+        "Like the capsule flavor",
+        "Liked the taste",
+        "Liked the smell",
+        "Other",
+        "Did not like anything in particular",
+      ],
+    },
   },
   {
     question: "উল্লেখিত সিগারেটটি কি আপনার দোকানে সবসময় পাওয়া যায়?",
     notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: [{ type: "option", options: ["Yes", "No"] }],
+    responses: { type: "option", options: ["Yes", "No"] },
   },
   {
     question: "আপনার দোকানে সব থেকে কম বিক্রয় হয় কোন ব্র্যান্ডের সিগারেট?",
     notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: [
-      {
-        type: "option",
-        options: [
-          "Camel",
-          "Sheikh",
-          "Navy",
-          "Navy Option",
-          "K2",
-          "Real",
-          "Benson",
-          "Gold Leaf",
-          "Lucky Strike",
-          "Star",
-          "Derby",
-          "Hollywood",
-          "Pilot",
-          "Sunmoon",
-          "Marise",
-          "Marlboro",
-          "Others",
-        ],
-      },
-    ],
+    responses: {
+      type: "option",
+      options: [
+        "Camel",
+        "Sheikh",
+        "Navy",
+        "Navy Option",
+        "K2",
+        "Real",
+        "Benson",
+        "Gold Leaf",
+        "Lucky Strike",
+        "Star",
+        "Derby",
+        "Hollywood",
+        "Pilot",
+        "Sunmoon",
+        "Marise",
+        "Marlboro",
+        "Others",
+      ],
+    },
   },
   {
     question:
       "আপনার মতে উল্লেখিত সিগারেটটির কোন দিকটি সবচেয়ে বেশি খারাপ লেগেছে। যার জন্য তার বিক্রয় কম হচ্ছে।",
     notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: [
-      {
-        type: "option",
-        options: [
-          "Amount of smoke",
-          "Can not draw easily",
-          "Filter gets damp",
-          "Irritation in throat",
-          "Cigarette burns fast",
-          "Did not like the taste",
-          "Did not like the design",
-          "Did not like the smell",
-          "Too strong",
-          "Did not like the capsule flavor",
-          "Did not like after capsule burst",
-          "Stick Design",
-          "Others",
-          "Did not dislike anything in particular",
-        ],
-      },
-    ],
+    responses: {
+      type: "option",
+      options: [
+        "Amount of smoke",
+        "Can not draw easily",
+        "Filter gets damp",
+        "Irritation in throat",
+        "Cigarette burns fast",
+        "Did not like the taste",
+        "Did not like the design",
+        "Did not like the smell",
+        "Too strong",
+        "Did not like the capsule flavor",
+        "Did not like after capsule burst",
+        "Stick Design",
+        "Others",
+        "Did not dislike anything in particular",
+      ],
+    },
   },
 ];
 const OutletSurveyPage = () => {
   const { isEnglish } = useLanguageState();
   const { user, userInfo } = useAuthenticationState();
-  const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -351,34 +337,32 @@ const OutletSurveyPage = () => {
                         </span>
                       </span>
                       <div>
-                        {item?.responses?.map((item, index) => (
-                          <div key={index}>
-                            {item?.type === "text" && (
-                              <FormControl type="text" name="" id="" />
-                            )}
-                            {item?.type === "option" && (
-                              <Select
-                                options={
-                                  item?.options?.map((item) => ({
-                                    value: item,
-                                    label: item,
-                                  })) || []
-                                }
-                              />
-                            )}
-                            {item?.type === "multiple-option" && (
-                              <Select
-                                isMulti={true}
-                                options={
-                                  item?.options?.map((item) => ({
-                                    value: item,
-                                    label: item,
-                                  })) || []
-                                }
-                              />
-                            )}
-                          </div>
-                        ))}
+                        <div key={index}>
+                          {item?.responses?.type === "text" && (
+                            <FormControl type="text" name="" id="" />
+                          )}
+                          {item?.responses?.type === "option" && (
+                            <Select
+                              options={
+                                item?.responses?.options?.map((item) => ({
+                                  value: item,
+                                  label: item,
+                                })) || []
+                              }
+                            />
+                          )}
+                          {item?.responses?.type === "multiple-option" && (
+                            <Select
+                              isMulti={true}
+                              options={
+                                item?.responses?.options?.map((item) => ({
+                                  value: item,
+                                  label: item,
+                                })) || []
+                              }
+                            />
+                          )}
+                        </div>
                       </div>
                     </div>
                   </label>
