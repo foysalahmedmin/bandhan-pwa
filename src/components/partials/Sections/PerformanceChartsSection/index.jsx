@@ -6,30 +6,40 @@ import { useEffect, useState } from "react";
 import { PieChart } from "react-minimal-pie-chart";
 
 // Reusable Pie Chart Component
-const PerformancePieChart = ({ title, value, label, target, achieved }) => {
-  const percentage = ((achieved / target) * 100).toFixed(2);
+const PerformancePieChart = ({
+  title = "",
+  value = 0,
+  label = "",
+  target = 0,
+  achieved = 0,
+}) => {
+  const percentage = (Number(achieved) / Number(target)) * 100 || 0;
   return (
     <div className="rounded-lg border bg-background shadow-lg">
       <div className="space-y-2 p-2 text-center">
         <div>
           <p className="text-xs font-normal text-primary">
-            {label}: {target}
+            {label}: {Number(target)}
           </p>
           <p className="text-xs font-normal text-primary">
-            Achieved: {achieved}
+            Achieved: {Number(achieved)}
           </p>
         </div>
         <div className="px-6">
           <PieChart
             data={[
-              { title: "Achieved", value, color: "#2b87e3" },
-              { title: "Remaining", value: 100 - value, color: COLORS.primary },
+              { title: "Achieved", value: Number(value), color: "#2b87e3" },
+              {
+                title: "Remaining",
+                value: 100 - Number(value >= 100 ? 100 : value),
+                color: COLORS?.primary,
+              },
             ]}
             radius={50}
             lineWidth={20}
-            paddingAngle={5}
+            paddingAngle={0}
           />
-          <p className="text-sm font-bold">Ach: {percentage}%</p>
+          <p className="text-sm font-bold">Ach: {percentage.toFixed(2)}%</p>
         </div>
       </div>
       <div className="bg-primary py-2 text-center text-sm text-white">
@@ -107,37 +117,47 @@ const PerformanceChartsSection = ({ outletCode, startDate, endDate }) => {
         <div className="grid grid-cols-2 gap-2">
           <PerformancePieChart
             title="Focus"
-            label={data?.focusedVolume?.labels[0]}
-            target={data?.focusedVolume?.data[0]}
-            achieved={data?.focusedVolume?.data[1]}
+            label={data?.focusedVolume?.labels?.[0] || ""}
+            target={Number(data?.focusedVolume?.data?.[0]) || 0}
+            achieved={Number(data?.focusedVolume?.data?.[1]) || 0}
             value={(
-              (data?.focusedVolume?.data[1] / data?.focusedVolume?.data[0]) *
+              ((Number(data?.focusedVolume?.data?.[1]) || 0) /
+                (Number(data?.focusedVolume?.data?.[0]) || 0)) *
               100
             ).toFixed(2)}
           />
           <PerformancePieChart
             title="Volume RMC"
-            label={data?.volumeRMC?.labels[0]}
-            target={data?.volumeRMC?.data[0]}
-            achieved={data?.volumeRMC?.data[1]}
+            label={data?.volumeRMC?.labels?.[0] || ""}
+            target={Number(data?.volumeRMC?.data?.[0]) || 0}
+            achieved={Number(data?.volumeRMC?.data?.[1]) || 0}
             value={(
-              (data?.volumeRMC?.data[1] / data?.volumeRMC?.data[0]) *
+              ((Number(data?.volumeRMC?.data?.[1]) || 0) /
+                (Number(data?.volumeRMC?.data?.[0]) || 0)) *
               100
             ).toFixed(2)}
           />
           <PerformancePieChart
             title="EAS"
-            label={data?.eas?.labels[0]}
-            target={data?.eas?.data[0]}
-            achieved={data?.eas?.data[1]}
-            value={((data?.eas?.data[1] / data?.eas?.data[0]) * 100).toFixed(2)}
+            label={data?.eas?.labels?.[0] || ""}
+            target={Number(data?.eas?.data?.[0]) || 0}
+            achieved={Number(data?.eas?.data?.[1]) || 0}
+            value={(
+              ((Number(data?.eas?.data?.[1]) || 0) /
+                (Number(data?.eas?.data?.[0]) || 0)) *
+              100
+            ).toFixed(2)}
           />
           <PerformancePieChart
             title="Outlet Visit"
             label="Call Report Target"
-            target={newData?.target || 0}
-            achieved={newData?.achievement || 0}
-            value={(newData?.achievement / newData?.target) * 100 || 0}
+            target={Number(newData?.target) || 0}
+            achieved={Number(newData?.achievement) || 0}
+            value={(
+              ((Number(newData?.achievement) || 0) /
+                (Number(newData?.target) || 0)) *
+              100
+            ).toFixed(2)}
           />
         </div>
       </>

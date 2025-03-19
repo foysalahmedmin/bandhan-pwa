@@ -74,6 +74,7 @@ export default function ViewItem({ state }) {
                     <video
                       className="mx-auto h-full max-h-full max-w-full"
                       controls
+                      autoPlay
                       src={URLS.baseMediaURL + data?.file}
                     />
                   );

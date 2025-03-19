@@ -470,7 +470,7 @@ const CallUpdatePage = () => {
             <div className="rounded-md border border-primary">
               <strong className="block w-full bg-primary py-2 text-center font-semibold text-primary-foreground">
                 {isEnglish
-                  ? "Reword Distribution Status"
+                  ? "Reward Distribution Status"
                   : "রিওয়ার্ড ডিস্ট্রিবিউশন স্ট্যাটাস"}
               </strong>
               <div className="p-2">

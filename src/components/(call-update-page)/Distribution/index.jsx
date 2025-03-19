@@ -53,7 +53,7 @@ const Distribution = ({ outletCode, salesPoint }) => {
                   className="text-white"
                 >
                   {isEnglish
-                    ? "Press to check reword distribution status"
+                    ? "Press to check reward distribution status"
                     : "রিওয়ার্ড ডিশটিবিউশন স্ট্যাটাস দেখতে প্রেস করুন"}
                 </button>
               </div>
@@ -68,7 +68,7 @@ const Distribution = ({ outletCode, salesPoint }) => {
                     className="text-white"
                   >
                     {isEnglish
-                      ? "Reword Distribution Acknowledgement"
+                      ? "Reward Distribution Acknowledgement"
                       : "রিওয়ার্ড ডিস্ট্রিবিউশন একনলেজমেন্ট"}
                   </button>
                 </div>
