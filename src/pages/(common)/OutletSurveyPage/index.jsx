@@ -4,184 +4,46 @@ import Select from "@/components/ui/Select";
 import URLS from "@/constants/urls";
 import useAuthenticationState from "@/hooks/state/useAuthenticationState";
 import useLanguageState from "@/hooks/state/useLanguageState";
+import { cn } from "@/lib/utils";
+import { CalendarDays } from "lucide-react";
 import { useLayoutEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const questions = [
+const phases = [
   {
-    question: "আপনি ভালো আছেন?",
-    notes:
-      "উত্তর হ্যাঁ হলে, টিএমএস পরের প্রশ্নে যাবে। উত্তর না হলে, টিএমএস ধন্যবাদ দিয়ে পরের সাক্ষাতের জন্য সময় নিয়ে নিবে এবং জরীপ শেষ করবে",
-    responses: { type: "option", options: ["Yes", "No"] },
+    _id: "1",
+    name: "Phase - 1",
+    start_date: "2025-04-01",
+    end_date: "2025-04-07",
+    total_questions: 11,
+    isCompleted: true,
+    isEnable: true,
   },
   {
-    question: "আপনি কি জনাব (রিটেইলারের নাম)?",
-    notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: { type: "option", options: ["Yes", "No"] },
-  },
-  {
-    question:
-      "বিসমিল্লাহ জেনারেল স্টোর (আউটলেট এর নাম) টিতে আপনি কি ভুমিকায় আছেন?",
-    notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: {
-      type: "option",
-      options: [
-        "দোকানের মালিক",
-        "দোকান পরিচালনাকারী (যিনি কেনা-বেচা করেন)",
-        "দোকানের মালিক ও দোকান পরিচালনা",
-        "অন্যান্য",
-      ],
-    },
-  },
-  {
-    question: "আপনি কি বন্ধন প্রোগ্রামে যুক্ত আছেন?",
-    notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: { type: "option", options: ["Yes", "No"] },
-  },
-  {
-    question: "আপনি বন্ধনের পাশাপাশি অন্য কোন প্রোগ্রামে যুক্ত আছেন?",
-    notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: { type: "option", options: ["Yes", "No"] },
-  },
-  {
-    question: "আপনার দোকানে বর্তমানে কি কি ব্র্যান্ডের সিগারেট আছে?",
-    notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: {
-      type: "multiple-option",
-      options: [
-        "Camel",
-        "Sheikh",
-        "Navy",
-        "Navy Option",
-        "K2",
-        "Real",
-        "Benson",
-        "Gold Leaf",
-        "Lucky Strike",
-        "Star",
-        "Derby",
-        "Hollywood",
-        "Pilot",
-        "Sunmoon",
-        "Marise",
-        "Marlboro",
-        "Others",
-      ],
-    },
-  },
-  {
-    question: "আপনার দোকানে সব থেকে বেশি বিক্রয় হয় কোন ব্র্যান্ডের সিগারেট?",
-    notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: {
-      type: "option",
-      options: [
-        "Camel",
-        "Sheikh",
-        "Navy",
-        "Navy Option",
-        "K2",
-        "Real",
-        "Benson",
-        "Gold Leaf",
-        "Lucky Strike",
-        "Star",
-        "Derby",
-        "Hollywood",
-        "Pilot",
-        "Sunmoon",
-        "Marise",
-        "Marlboro",
-        "Others",
-      ],
-    },
-  },
-  {
-    question:
-      "আপনার মতে উল্লেখিত সিগারেটটির কোন দিকটি সবচেয়ে বেশি ভালো লেগেছে। যার জন্য তার বিক্রয় বেশি হচ্ছে।",
-    notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: {
-      type: "option",
-      options: [
-        "Taste",
-        "Pack design",
-        "Campaign/communication",
-        "Like the flavor",
-        "Stick design",
-        "Like it after capsule burst",
-        "Less draw effort/easy to draw",
-        "Strong filter construct",
-        "No irritation in throat",
-        "Like the capsule flavor",
-        "Liked the taste",
-        "Liked the smell",
-        "Other",
-        "Did not like anything in particular",
-      ],
-    },
-  },
-  {
-    question: "উল্লেখিত সিগারেটটি কি আপনার দোকানে সবসময় পাওয়া যায়?",
-    notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: { type: "option", options: ["Yes", "No"] },
-  },
-  {
-    question: "আপনার দোকানে সব থেকে কম বিক্রয় হয় কোন ব্র্যান্ডের সিগারেট?",
-    notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: {
-      type: "option",
-      options: [
-        "Camel",
-        "Sheikh",
-        "Navy",
-        "Navy Option",
-        "K2",
-        "Real",
-        "Benson",
-        "Gold Leaf",
-        "Lucky Strike",
-        "Star",
-        "Derby",
-        "Hollywood",
-        "Pilot",
-        "Sunmoon",
-        "Marise",
-        "Marlboro",
-        "Others",
-      ],
-    },
-  },
-  {
-    question:
-      "আপনার মতে উল্লেখিত সিগারেটটির কোন দিকটি সবচেয়ে বেশি খারাপ লেগেছে। যার জন্য তার বিক্রয় কম হচ্ছে।",
-    notes: "প্রতিনিধি নোট করবে এবং পরবর্তী প্রশ্নে চলে যাবে",
-    responses: {
-      type: "option",
-      options: [
-        "Amount of smoke",
-        "Can not draw easily",
-        "Filter gets damp",
-        "Irritation in throat",
-        "Cigarette burns fast",
-        "Did not like the taste",
-        "Did not like the design",
-        "Did not like the smell",
-        "Too strong",
-        "Did not like the capsule flavor",
-        "Did not like after capsule burst",
-        "Stick Design",
-        "Others",
-        "Did not dislike anything in particular",
-      ],
-    },
+    _id: "2",
+    name: "Phase - 2",
+    start_date: "2025-04-08",
+    end_date: "2025-04-14",
+    total_questions: 3,
+    isCompleted: true,
+    isEnable: false,
   },
 ];
+
 const OutletSurveyPage = () => {
   const { isEnglish } = useLanguageState();
   const { user, userInfo } = useAuthenticationState();
+  const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(false);
 
   const [outlets, setOutlets] = useState([]);
   const [selectedOutlet, setSelectedOutlet] = useState({});
+
+  const [selectedPhase, setSelectedPhase] = useState({});
+
+  const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState([]);
 
   const [outletDetails, setOutletDetails] = useState({});
 
@@ -323,6 +185,66 @@ const OutletSurveyPage = () => {
           {selectedOutlet?.value && (
             <div className="space-y-2 border border-primary p-2">
               <span className="block font-semibold text-primary">
+                {isEnglish ? "Survey Phases" : "সার্ভে ফেইজ"}
+              </span>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {phases?.map((phase, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "cursor-pointer rounded-lg border p-4 shadow-md backdrop-blur transition hover:bg-white/50",
+                      {
+                        "pointer-events-none opacity-75": !phase?.isEnable,
+                      },
+                      {
+                        "bg-white/50 outline outline-2 outline-primary":
+                          phase?._id === selectedPhase?._id,
+                      },
+                    )}
+                    onClick={() => {
+                      if (!phase?.isEnable) return;
+                      setSelectedPhase(phase);
+                    }}
+                    disabled={!phase?.isEnable}
+                  >
+                    <h5 className="mb-2 text-lg font-semibold">
+                      {phase?.name}
+                    </h5>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <CalendarDays className="h-4 w-4 text-primary" />
+                      <span>
+                        {new Date(phase?.start_date).toLocaleDateString(
+                          "en-US",
+                          {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          },
+                        )}
+                      </span>
+                      <span className="mx-2">-</span>
+                      <span>
+                        {new Date(phase?.end_date).toLocaleDateString("en-US", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm font-medium">
+                      Total Questions:{" "}
+                      <span className="font-bold">{phase.total_questions}</span>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {selectedOutlet?.value && (
+            <div className="space-y-2 border border-primary p-2">
+              <span className="block font-semibold text-primary">
                 {isEnglish ? "Outlet Survey Questions" : "আউটলেট সার্ভে প্রশ্ন"}
               </span>
               <div className="space-y-2">
@@ -372,8 +294,23 @@ const OutletSurveyPage = () => {
           )}
 
           <div className="text-right">
-            <Button disabled={!selectedOutlet?.value || isLoading}>
-              <span>{isEnglish ? "Submit" : "সাবমিট"}</span>
+            <Button
+              onClick={() =>
+                navigate(`/outlet-survey-questions`, {
+                  state: {
+                    outletCode: outletDetails?.code,
+                    outletName: outletDetails?.name,
+                    communication: outletDetails?.communication?.file,
+                    salesPoint: selectedOutlet,
+                    phase: selectedPhase,
+                  },
+                })
+              }
+              disabled={
+                !selectedOutlet?.value || !selectedPhase?._id || isLoading
+              }
+            >
+              <span>{isEnglish ? "Outlet Survey" : "আউটলেট সার্ভে"}</span>
             </Button>
           </div>
         </div>

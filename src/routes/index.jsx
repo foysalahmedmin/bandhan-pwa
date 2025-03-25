@@ -22,6 +22,7 @@ import HomePage from "@/pages/(common)/HomePage";
 import LocationPage from "@/pages/(common)/LocationPage";
 import NotificationsPage from "@/pages/(common)/NotificationPage";
 import OutletSurveyPage from "@/pages/(common)/OutletSurveyPage";
+import OutletSurveyQuestionsPage from "@/pages/(common)/OutletSurveyQuestionsPage";
 import RewardPage from "@/pages/(common)/RewardPage";
 import SettingsPage from "@/pages/(common)/SettingsPage";
 
@@ -78,6 +79,10 @@ export const routes = [
           {
             path: "/outlet-survey",
             element: <OutletSurveyPage />,
+          },
+          {
+            path: "/outlet-survey-questions",
+            element: <OutletSurveyQuestionsPage />,
           },
           {
             path: "/communication",

@@ -7,6 +7,7 @@ import PcmInputItem from "@/components/(call-update-page)/PcmInputItem";
 import PomsBoolInputItem from "@/components/(call-update-page)/PomsBoolInputItem";
 import PosmInputItem from "@/components/(call-update-page)/PosmInputItem";
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { FormControl } from "@/components/ui/FormControl";
 import { Radio } from "@/components/ui/Radio";
 import URLS from "@/constants/urls";
@@ -360,10 +361,10 @@ const CallUpdatePage = () => {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {pcmData?.map((item, index) => (
                     <div key={index} className="flex items-center gap-2">
-                      <FormControl
+                      <Checkbox
                         type="checkbox"
                         id={`pcm-${index}`}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        className="h-4 w-4 cursor-pointer border-accent"
                         checked={pcm[item.id] || false}
                         onChange={(e) =>
                           setPcm((prev) => ({
