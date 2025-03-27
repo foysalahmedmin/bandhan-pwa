@@ -72,6 +72,10 @@ const labels = {
     en: "outlet survey",
     bn: "আউটলেট সার্ভে",
   },
+  "outlet-survey-questions": {
+    en: "outlet survey questions",
+    bn: "আউটলেট সার্ভে প্রশ্নসমূহ",
+  },
 };
 
 const Header = ({ className }) => {
