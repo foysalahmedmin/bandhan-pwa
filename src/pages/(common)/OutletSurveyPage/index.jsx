@@ -240,28 +240,26 @@ const OutletSurveyPage = () => {
               </div>
             </div>
           )}
-          {selectedPhase?.value && (
-            <div className="text-right">
-              <Button
-                onClick={() =>
-                  navigate(`/outlet-survey-questions`, {
-                    state: {
-                      outletCode: outletDetails?.code,
-                      outletName: outletDetails?.name,
-                      communication: outletDetails?.communication?.file,
-                      salesPoint: selectedOutlet,
-                      phase: selectedPhase,
-                    },
-                  })
-                }
-                disabled={
-                  !selectedOutlet?.value || !selectedPhase?._id || isLoading
-                }
-              >
-                <span>{isEnglish ? "Outlet Survey" : "আউটলেট সার্ভে"}</span>
-              </Button>
-            </div>
-          )}
+          <div className="text-right">
+            <Button
+              onClick={() =>
+                navigate(`/outlet-survey-questions`, {
+                  state: {
+                    outletCode: outletDetails?.code,
+                    outletName: outletDetails?.name,
+                    communication: outletDetails?.communication?.file,
+                    salesPoint: selectedOutlet,
+                    phase: selectedPhase,
+                  },
+                })
+              }
+              disabled={
+                !selectedOutlet?.value || !selectedPhase?._id || isLoading
+              }
+            >
+              <span>{isEnglish ? "Outlet Survey" : "আউটলেট সার্ভে"}</span>
+            </Button>
+          </div>
         </div>
       </section>
     </main>
