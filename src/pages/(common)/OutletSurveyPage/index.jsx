@@ -26,7 +26,7 @@ const phases = [
     end_date: "2025-04-14",
     total_questions: 3,
     isCompleted: true,
-    isEnable: false,
+    isEnable: true,
   },
 ];
 
