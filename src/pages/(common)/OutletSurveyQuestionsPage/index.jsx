@@ -229,9 +229,37 @@ const questions_data = {
   ],
 };
 
-const Question = ({ question, index, subindex }) => {
+const Question = ({
+  question,
+  index,
+  subindex,
+  answers,
+  setAnswers,
+  followUpAnswers,
+  setFollowUpAnswers,
+}) => {
+  const handleAnswerChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const questionId = name.replace("question-", "");
+
+    const answerData = {
+      questionId,
+      answer: type === "checkbox" ? checked : value,
+    };
+
+    setAnswers((prev) => {
+      const existingIndex = prev.findIndex((a) => a.questionId === questionId);
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex] = answerData;
+        return updated;
+      }
+      return [...prev, answerData];
+    });
+  };
+
   return (
-    <div key={question._id} className={cn("mb-6 rounded-lg border p-4")}>
+    <div className={cn("mb-6 rounded-lg border p-4")}>
       <div className="mb-3">
         <p
           className={cn(
@@ -239,8 +267,7 @@ const Question = ({ question, index, subindex }) => {
             question.isRequired && "font-semibold",
           )}
         >
-          {index + 1}. {subindex !== undefined && `${subindex + 1}.`}{" "}
-          {question?.question}
+          {index + 1}.{question?.question}
           {question.isRequired && <span className="ml-1 text-red-500">*</span>}
         </p>
         {question?.note && (
@@ -254,6 +281,14 @@ const Question = ({ question, index, subindex }) => {
             type="text"
             name={`question-${question._id}`}
             placeholder="Enter your answer"
+            onChange={handleAnswerChange}
+            value={
+              (subindex !== undefined
+                ? followUpAnswers.find((a) => a.questionId === question._id)
+                    ?.answer
+                : answers.find((a) => a.questionId === question._id)?.answer) ||
+              ""
+            }
           />
         )}
 
@@ -262,55 +297,324 @@ const Question = ({ question, index, subindex }) => {
             type="number"
             name={`question-${question._id}`}
             placeholder="Enter your answer"
+            onChange={handleAnswerChange}
+            value={
+              (subindex !== undefined
+                ? followUpAnswers.find((a) => a.questionId === question._id)
+                    ?.answer
+                : answers.find((a) => a.questionId === question._id)?.answer) ||
+              ""
+            }
           />
         )}
 
         {question?.type === "option" && (
           <div className="space-y-2">
-            {question?.options.map((option, optIndex) => (
-              <label
-                key={`${question._id}-${optIndex}`}
-                className="flex cursor-pointer items-center space-x-2"
-              >
-                <Radio
-                  type="radio"
-                  name={`question-${question._id}`}
-                  className="h-4 w-4 cursor-pointer border-accent"
-                />
-                <span className="text-gray-700">{option}</span>
-              </label>
-            ))}
+            {question?.options.map((option, optIndex) => {
+              const currentValue =
+                subindex !== undefined
+                  ? followUpAnswers.find((a) => a.questionId === question._id)
+                      ?.answer
+                  : answers.find((a) => a.questionId === question._id)?.answer;
+
+              return (
+                <label
+                  key={`${question._id}-${optIndex}`}
+                  className="flex cursor-pointer items-center space-x-2"
+                >
+                  <Radio
+                    type="radio"
+                    name={`question-${question._id}`}
+                    className="h-4 w-4 cursor-pointer border-accent"
+                    value={option}
+                    checked={currentValue === option}
+                    onChange={handleAnswerChange}
+                  />
+                  <span className="text-gray-700">{option}</span>
+                </label>
+              );
+            })}
           </div>
         )}
 
         {question?.type === "multiple-option" && (
           <div className="space-y-2">
-            {question.options.map((option, optIndex) => (
-              <label key={`${question._id}-${optIndex}`}>
-                <Checkbox
-                  type="checkbox"
-                  name={`question-${question._id}`}
-                  className="h-4 w-4 cursor-pointer border-accent"
-                />
-                <span className="text-gray-700">{option}</span>
-              </label>
-            ))}
+            {question.options.map((option, optIndex) => {
+              const currentValues =
+                subindex !== undefined
+                  ? followUpAnswers.find((a) => a.questionId === question._id)
+                      ?.answer || []
+                  : answers.find((a) => a.questionId === question._id)
+                      ?.answer || [];
+
+              return (
+                <label
+                  key={`${question._id}-${optIndex}`}
+                  className="flex items-center space-x-2"
+                >
+                  <Checkbox
+                    type="checkbox"
+                    name={`question-${question._id}`}
+                    className="h-4 w-4 cursor-pointer border-accent"
+                    value={option}
+                    checked={currentValues.includes(option)}
+                    onChange={(e) => {
+                      const newValues = e.target.checked
+                        ? [...currentValues, option]
+                        : currentValues.filter((v) => v !== option);
+
+                      const answerData = {
+                        questionId: question._id,
+                        answer: newValues,
+                      };
+
+                      if (subindex !== undefined) {
+                        setFollowUpAnswers((prev) => {
+                          const existingIndex = prev.findIndex(
+                            (a) => a.questionId === question._id,
+                          );
+                          if (existingIndex >= 0) {
+                            const updated = [...prev];
+                            updated[existingIndex] = answerData;
+                            return updated;
+                          }
+                          return [...prev, answerData];
+                        });
+                      } else {
+                        setAnswers((prev) => {
+                          const existingIndex = prev.findIndex(
+                            (a) => a.questionId === question._id,
+                          );
+                          if (existingIndex >= 0) {
+                            const updated = [...prev];
+                            updated[existingIndex] = answerData;
+                            return updated;
+                          }
+                          return [...prev, answerData];
+                        });
+                      }
+                    }}
+                  />
+                  <span className="text-gray-700">{option}</span>
+                </label>
+              );
+            })}
           </div>
         )}
       </div>
 
       {question?.isFollowUpRequired && question?.questions?.length > 0 && (
         <div className="mt-4 border-l-4 border-primary/50 pl-4">
-          {question.questions.map((q, subindex) => (
-            <Question
-              key={q._id}
+          {question.questions.map((followUpQuestion, subindex) => (
+            <FollowUpQuestion
+              key={subindex}
               index={index}
               subindex={subindex}
-              question={q}
+              question={question}
+              followUpQuestion={followUpQuestion}
+              followUpAnswers={followUpAnswers}
+              setFollowUpAnswers={setFollowUpAnswers}
             />
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+const FollowUpQuestion = ({
+  question,
+  followUpQuestion,
+  index,
+  subindex,
+  answers,
+  setAnswers,
+  followUpAnswers,
+  setFollowUpAnswers,
+}) => {
+  const handleAnswerChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const followUpQuestionId = name.replace("question-", "");
+
+    const answerData = {
+      questionId: question._id,
+      followUpQuestionId: followUpQuestionId,
+      refarance: followUpQuestion?.refarance || "",
+      answer: type === "checkbox" ? checked : value,
+    };
+
+    setFollowUpAnswers((prev) => {
+      const existingIndex = prev.findIndex(
+        (a) =>
+          a.questionId === question._id &&
+          a.followUpQuestionId === followUpQuestionId,
+      );
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex] = answerData;
+        return updated;
+      }
+      return [...prev, answerData];
+    });
+  };
+
+  return (
+    <div
+      key={followUpQuestion._id}
+      className={cn("mb-6 rounded-lg border p-4")}
+    >
+      <div className="mb-3">
+        <p
+          className={cn(
+            "mb-1 font-medium text-gray-800",
+            followUpQuestion.isRequired && "font-semibold",
+          )}
+        >
+          {index + 1}. {subindex !== undefined && `${subindex + 1}.`}{" "}
+          {followUpQuestion?.question}
+          {followUpQuestion.isRequired && (
+            <span className="ml-1 text-red-500">*</span>
+          )}
+        </p>
+        {followUpQuestion?.note && (
+          <small className="italic text-gray-500">
+            {followUpQuestion.note}
+          </small>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {followUpQuestion?.type === "text" && (
+          <FormControl
+            type="text"
+            name={`question-${followUpQuestion._id}`}
+            placeholder="Enter your answer"
+            onChange={handleAnswerChange}
+            value={
+              (subindex !== undefined
+                ? followUpAnswers.find(
+                    (a) => a.questionId === followUpQuestion._id,
+                  )?.answer
+                : answers.find((a) => a.questionId === followUpQuestion._id)
+                    ?.answer) || ""
+            }
+          />
+        )}
+
+        {followUpQuestion?.type === "number" && (
+          <FormControl
+            type="number"
+            name={`question-${followUpQuestion._id}`}
+            placeholder="Enter your answer"
+            onChange={handleAnswerChange}
+            value={
+              (subindex !== undefined
+                ? followUpAnswers.find(
+                    (a) => a.questionId === followUpQuestion._id,
+                  )?.answer
+                : answers.find((a) => a.questionId === followUpQuestion._id)
+                    ?.answer) || ""
+            }
+          />
+        )}
+
+        {followUpQuestion?.type === "option" && (
+          <div className="space-y-2">
+            {followUpQuestion?.options.map((option, optIndex) => {
+              const currentValue =
+                subindex !== undefined
+                  ? followUpAnswers.find(
+                      (a) => a.questionId === followUpQuestion._id,
+                    )?.answer
+                  : answers.find((a) => a.questionId === followUpQuestion._id)
+                      ?.answer;
+
+              return (
+                <label
+                  key={`${followUpQuestion._id}-${optIndex}`}
+                  className="flex cursor-pointer items-center space-x-2"
+                >
+                  <Radio
+                    type="radio"
+                    name={`question-${followUpQuestion._id}`}
+                    className="h-4 w-4 cursor-pointer border-accent"
+                    value={option}
+                    checked={currentValue === option}
+                    onChange={handleAnswerChange}
+                  />
+                  <span className="text-gray-700">{option}</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+
+        {followUpQuestion?.type === "multiple-option" && (
+          <div className="space-y-2">
+            {followUpQuestion.options.map((option, optIndex) => {
+              const currentValues =
+                subindex !== undefined
+                  ? followUpAnswers.find(
+                      (a) => a.questionId === followUpQuestion._id,
+                    )?.answer || []
+                  : answers.find((a) => a.questionId === followUpQuestion._id)
+                      ?.answer || [];
+
+              return (
+                <label
+                  key={`${followUpQuestion._id}-${optIndex}`}
+                  className="flex items-center space-x-2"
+                >
+                  <Checkbox
+                    type="checkbox"
+                    name={`question-${followUpQuestion._id}`}
+                    className="h-4 w-4 cursor-pointer border-accent"
+                    value={option}
+                    checked={currentValues.includes(option)}
+                    onChange={(e) => {
+                      const newValues = e.target.checked
+                        ? [...currentValues, option]
+                        : currentValues.filter((v) => v !== option);
+
+                      const answerData = {
+                        questionId: followUpQuestion._id,
+                        answer: newValues,
+                      };
+
+                      if (subindex !== undefined) {
+                        setFollowUpAnswers((prev) => {
+                          const existingIndex = prev.findIndex(
+                            (a) => a.questionId === followUpQuestion._id,
+                          );
+                          if (existingIndex >= 0) {
+                            const updated = [...prev];
+                            updated[existingIndex] = answerData;
+                            return updated;
+                          }
+                          return [...prev, answerData];
+                        });
+                      } else {
+                        setAnswers((prev) => {
+                          const existingIndex = prev.findIndex(
+                            (a) => a.questionId === followUpQuestion._id,
+                          );
+                          if (existingIndex >= 0) {
+                            const updated = [...prev];
+                            updated[existingIndex] = answerData;
+                            return updated;
+                          }
+                          return [...prev, answerData];
+                        });
+                      }
+                    }}
+                  />
+                  <span className="text-gray-700">{option}</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -383,7 +687,15 @@ const OutletSurveyQuestionsPage = () => {
               <div className="p-2">
                 <div className="grid grid-cols-1">
                   {questions?.map((question, index) => (
-                    <Question key={index} index={index} question={question} />
+                    <Question
+                      key={index}
+                      index={index}
+                      question={question}
+                      answers={answers}
+                      setAnswers={setAnswers}
+                      followUpAnswers={followUpAnswers}
+                      setFollowUpAnswers={setFollowUpAnswers}
+                    />
                   ))}
                 </div>
               </div>

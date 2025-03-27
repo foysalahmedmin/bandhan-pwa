@@ -247,49 +247,6 @@ const OutletSurveyPage = () => {
               <span className="block font-semibold text-primary">
                 {isEnglish ? "Outlet Survey Questions" : "আউটলেট সার্ভে প্রশ্ন"}
               </span>
-              <div className="space-y-2">
-                {questions?.map((item, index) => (
-                  <label className="flex items-start gap-2" key={index}>
-                    <span>{index + 1}.</span>
-                    <div className="flex-1 space-y-1">
-                      <span className="block text-sm">
-                        {isEnglish ? item?.question : item?.question}{" "}
-                        <span className="block text-xs">
-                          ({isEnglish ? item?.notes : item?.notes})
-                        </span>
-                      </span>
-                      <div>
-                        <div key={index}>
-                          {item?.responses?.type === "text" && (
-                            <FormControl type="text" name="" id="" />
-                          )}
-                          {item?.responses?.type === "option" && (
-                            <Select
-                              options={
-                                item?.responses?.options?.map((item) => ({
-                                  value: item,
-                                  label: item,
-                                })) || []
-                              }
-                            />
-                          )}
-                          {item?.responses?.type === "multiple-option" && (
-                            <Select
-                              isMulti={true}
-                              options={
-                                item?.responses?.options?.map((item) => ({
-                                  value: item,
-                                  label: item,
-                                })) || []
-                              }
-                            />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
             </div>
           )}
 
