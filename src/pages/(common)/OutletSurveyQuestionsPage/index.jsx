@@ -2,10 +2,8 @@ import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { FormControl } from "@/components/ui/FormControl";
 import { Radio } from "@/components/ui/Radio";
-import URLS from "@/constants/urls";
 import useLanguageState from "@/hooks/state/useLanguageState";
 import { cn } from "@/lib/utils";
-import axios from "axios";
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -369,8 +367,6 @@ const OutletSurveyQuestionsPage = () => {
   const { isEnglish } = useLanguageState();
 
   const [questions, setQuestions] = useState([]);
-  const [answers, setAnswers] = useState([]);
-  const [followUpAnswers, setFollowUpAnswers] = useState([]);
   const [successModal, setSuccessModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -392,20 +388,16 @@ const OutletSurveyQuestionsPage = () => {
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
-      const url = URLS.baseURL + "/app/outlet-survey";
-      const payload = {
-        outletCode: outletCode,
-        salesPoint: salesPoint,
-        phase: _id,
-        survey: {
-          answers,
-          followUpAnswers,
-        },
-      };
-      const response = await axios.post(url, payload);
-      if (response.status === 200) {
-        setSuccessModal(true);
-      }
+      // const url = URLS.baseURL + "/app/outlet-survey";
+      // const payload = {
+      //   outletCode: outletCode,
+      //   salesPoint: salesPoint,
+      //   phase: _id,
+      // };
+      // const response = await axios.post(url, payload);
+      // if (response.status === 200) {
+      //   setSuccessModal(true);
+      // }
       setIsLoading(false);
     } catch (err) {
       console.error("Error submitting data:", err);

@@ -242,34 +242,28 @@ const OutletSurveyPage = () => {
               </div>
             </div>
           )}
-          {selectedOutlet?.value && (
-            <div className="space-y-2 border border-primary p-2">
-              <span className="block font-semibold text-primary">
-                {isEnglish ? "Outlet Survey Questions" : "আউটলেট সার্ভে প্রশ্ন"}
-              </span>
+          {selectedPhase?.value && (
+            <div className="text-right">
+              <Button
+                onClick={() =>
+                  navigate(`/outlet-survey-questions`, {
+                    state: {
+                      outletCode: outletDetails?.code,
+                      outletName: outletDetails?.name,
+                      communication: outletDetails?.communication?.file,
+                      salesPoint: selectedOutlet,
+                      phase: selectedPhase,
+                    },
+                  })
+                }
+                disabled={
+                  !selectedOutlet?.value || !selectedPhase?._id || isLoading
+                }
+              >
+                <span>{isEnglish ? "Outlet Survey" : "আউটলেট সার্ভে"}</span>
+              </Button>
             </div>
           )}
-
-          <div className="text-right">
-            <Button
-              onClick={() =>
-                navigate(`/outlet-survey-questions`, {
-                  state: {
-                    outletCode: outletDetails?.code,
-                    outletName: outletDetails?.name,
-                    communication: outletDetails?.communication?.file,
-                    salesPoint: selectedOutlet,
-                    phase: selectedPhase,
-                  },
-                })
-              }
-              disabled={
-                !selectedOutlet?.value || !selectedPhase?._id || isLoading
-              }
-            >
-              <span>{isEnglish ? "Outlet Survey" : "আউটলেট সার্ভে"}</span>
-            </Button>
-          </div>
         </div>
       </section>
     </main>
