@@ -42,9 +42,6 @@ const OutletSurveyPage = () => {
 
   const [selectedPhase, setSelectedPhase] = useState({});
 
-  const [questions, setQuestions] = useState([]);
-  const [answers, setAnswers] = useState([]);
-
   const [outletDetails, setOutletDetails] = useState({});
 
   useLayoutEffect(() => {
@@ -192,12 +189,13 @@ const OutletSurveyPage = () => {
                   <div
                     key={index}
                     className={cn(
-                      "cursor-pointer rounded-lg border p-4 shadow-md backdrop-blur transition hover:bg-white/50",
+                      "cursor-pointer rounded-lg border bg-white/50 p-4 shadow-md backdrop-blur transition hover:bg-white/75",
                       {
-                        "pointer-events-none opacity-75": !phase?.isEnable,
+                        "pointer-events-none bg-white/25 opacity-50":
+                          !phase?.isEnable,
                       },
                       {
-                        "bg-white/50 outline outline-2 outline-primary":
+                        "bg-white/75 outline outline-2 outline-primary":
                           phase?._id === selectedPhase?._id,
                       },
                     )}
