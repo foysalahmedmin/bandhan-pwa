@@ -11,25 +11,34 @@ import { Check } from "lucide-react";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const Question = ({ question, index, subindex, handleAddValue }) => {
-  const questions =
-    question?.questions?.filter((q) => {
-      if (!q?.reference) return true;
-      return q?.reference === question?.value;
-    }) || [];
+const Question = ({ question, index, subindex, handleAddValue, questions }) => {
+  const allDependenciesSatisfied =
+    question?.dependencies?.every((d) =>
+      questions.some((q) => q._id === d.questionId && q.value === d.option),
+    ) ?? true;
+
+  const isIndependent =
+    !question?.dependencies?.length || allDependenciesSatisfied;
+
+  const isRequired = (question?.isRequired && !isIndependent) || false;
 
   return (
-    <div key={question._id} className={cn("mb-6 rounded-lg border p-4")}>
+    <div
+      key={question._id}
+      className={cn("mb-6 rounded-lg border p-4", {
+        "mt-4 border-l-4 border-primary/50 pl-4": question?.isDependent,
+        hidden: question?.isDependent && !isIndependent,
+      })}
+    >
       <div className="mb-3">
         <p
           className={cn(
             "mb-1 font-medium text-gray-800",
-            question.isRequired && "font-semibold",
+            isRequired && "font-semibold",
           )}
         >
-          {index + 1}. {subindex !== undefined && `${subindex + 1}.`}{" "}
-          {question?.question}
-          {question.isRequired && <span className="ml-1 text-red-500">*</span>}
+          {question?.serial}. {question?.question}
+          {question?.isRequired && <span className="ml-1 text-red-500">*</span>}
         </p>
         {question?.note && (
           <small className="italic text-gray-500">{question.note}</small>
@@ -43,6 +52,7 @@ const Question = ({ question, index, subindex, handleAddValue }) => {
             name={`question-${question._id}`}
             placeholder="Enter your answer"
             value={question?.value || null}
+            required={isRequired || false}
             onChange={(e) => handleAddValue(e.target.value, index, subindex)}
           />
         )}
@@ -53,6 +63,7 @@ const Question = ({ question, index, subindex, handleAddValue }) => {
             name={`question-${question._id}`}
             placeholder="Enter your answer"
             value={question?.value || null}
+            required={isRequired || false}
             onChange={(e) => handleAddValue(e.target.value, index, subindex)}
           />
         )}
@@ -63,6 +74,7 @@ const Question = ({ question, index, subindex, handleAddValue }) => {
             name={`question-${question._id}`}
             placeholder="Enter your answer"
             value={question?.value || null}
+            required={isRequired || false}
             onChange={(e) => handleAddValue(e.target.value, index, subindex)}
           />
         )}
@@ -80,6 +92,7 @@ const Question = ({ question, index, subindex, handleAddValue }) => {
                     name={`question-${question._id}`}
                     className="h-4 w-4 cursor-pointer border-accent"
                     value={option?.value}
+                    required={(isRequired && !question?.value) || false}
                     checked={question?.value === option?.value}
                     onChange={(e) => handleAddValue(e.target.value, index)}
                   />
@@ -106,6 +119,12 @@ const Question = ({ question, index, subindex, handleAddValue }) => {
                     name={`question-${question._id}`}
                     className="h-4 w-4 cursor-pointer border-accent"
                     value={option?.value}
+                    required={
+                      (isRequired &&
+                        !question?.value &&
+                        !question?.value?.length) ||
+                      false
+                    }
                     checked={values.includes(option?.value)}
                     onChange={(e) => {
                       const newValues = e.target.checked
@@ -122,21 +141,6 @@ const Question = ({ question, index, subindex, handleAddValue }) => {
           </div>
         )}
       </div>
-      {question?.isFollowUpRequired &&
-        question?.value &&
-        questions?.length > 0 && (
-          <div className="mt-4 border-l-4 border-primary/50 pl-4">
-            {questions?.map((question, subindex) => (
-              <Question
-                key={subindex}
-                index={index}
-                subindex={subindex}
-                question={question}
-                handleAddValue={handleAddValue}
-              />
-            ))}
-          </div>
-        )}
     </div>
   );
 };
@@ -254,6 +258,7 @@ const OutletSurveyQuestionsPage = () => {
         if (q?.value === undefined || q?.value === null) return acc;
 
         const item = {
+          user: userInfo?._id,
           outlet: outletId,
           phase: _id,
           question: q._id,
