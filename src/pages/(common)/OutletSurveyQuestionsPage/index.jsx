@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const Question = ({ question, index, handleAddValue, questions }) => {
+  console.log('question', { question, index, questions });
   const { isEnglish } = useLanguageState();
 
   const dependenciesSatisfied = useMemo(() => {
@@ -27,6 +28,8 @@ const Question = ({ question, index, handleAddValue, questions }) => {
 
   const isVisible = !question.isDependent || dependenciesSatisfied;
   const isRequired = question.isRequired && dependenciesSatisfied;
+
+  console.log('dependenciesSatisfied', dependenciesSatisfied);
 
   const handleValueChange = (value) => {
     let processedValue = value;
@@ -47,6 +50,8 @@ const Question = ({ question, index, handleAddValue, questions }) => {
 
     handleAddValue(processedValue, index);
   };
+
+  console.log('isVisible', isVisible)
 
   if (!isVisible) return null;
 
@@ -158,6 +163,8 @@ const OutletSurveyQuestionsPage = () => {
             headers: { Authorization: user },
           },
         );
+
+        console.log('data', data);
 
         const mergedQuestions =
           phase?.questions?.map((q) => {
