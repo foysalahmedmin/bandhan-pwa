@@ -2,230 +2,14 @@ import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { FormControl } from "@/components/ui/FormControl";
 import { Radio } from "@/components/ui/Radio";
+import URLS from "@/constants/urls";
+import useAuthenticationState from "@/hooks/state/useAuthenticationState";
 import useLanguageState from "@/hooks/state/useLanguageState";
 import { cn } from "@/lib/utils";
+import axios from "axios";
 import { Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-
-const questions_data = {
-  1: [
-    {
-      _id: "q1_1",
-      isRequired: true,
-      isFollowUpRequired: false,
-      question: "বিক্রেতার নাম:",
-      note: "",
-      type: "text",
-      options: [],
-    },
-    {
-      _id: "q1_2",
-      isRequired: true,
-      isFollowUpRequired: false,
-      question: "লিঙ্গ:",
-      note: "",
-      type: "option",
-      options: ["পুরুষ", "মহিলা", "অন্যান্য"],
-    },
-    {
-      _id: "q1_3",
-      isRequired: true,
-      isFollowUpRequired: false,
-      question: "জন্মতারিখ:",
-      note: "",
-      type: "text",
-      options: [],
-    },
-    {
-      _id: "q1_4",
-      isRequired: true,
-      isFollowUpRequired: false,
-      question: "ধর্ম:",
-      note: "",
-      type: "text",
-      options: [],
-    },
-    {
-      _id: "q1_5",
-      isRequired: false,
-      isFollowUpRequired: false,
-      question: "শারীরিক প্রতিবন্ধকতা (যদি থাকে):",
-      note: "",
-      type: "text",
-      options: [],
-    },
-    {
-      _id: "q1_6",
-      isRequired: true,
-      isFollowUpRequired: true,
-      question: "আপনি কি একাই দোকান পরিচালনা করেন?",
-      note: "শুধুমাত্র 'না' হলে পরবর্তী প্রশ্ন প্রযোজ্য",
-      type: "option",
-      options: ["হ্যাঁ", "না"],
-
-      questions: [
-        {
-          _id: "q1_6_1",
-          isRequired: true,
-          reference: "না",
-          question: "আপনার সহায়ক ব্যক্তি কে?",
-          note: "",
-          type: "text",
-          options: [],
-        },
-        {
-          _id: "q1_6_2",
-          isRequired: true,
-          reference: "না",
-          question: "আপনি দৈনিক কত সময় দোকান পরিচালনা করেন?",
-          note: "",
-          type: "text",
-          options: [],
-        },
-      ],
-    },
-    {
-      _id: "q1_7",
-      isRequired: true,
-      isFollowUpRequired: false,
-      question: "আপনার ব্যবসার ধরন:",
-      note: "",
-      type: "text",
-      options: [],
-    },
-    {
-      _id: "q1_8",
-      isRequired: true,
-      isFollowUpRequired: true,
-      question: "এই দোকান কি আপনার একক মালিকানাধীন নাকি অংশীদারিত্বে রয়েছে?",
-      note: "যদি অংশীদার থাকে, অংশীদারের সংখ্যা এবং তাদের সাথে পারিবারিক সম্পর্ক উল্লেখ করুন",
-      type: "option",
-      options: ["একক মালিকানা", "অংশীদারিত্ব"],
-
-      questions: [
-        {
-          _id: "q1_8_1",
-          isRequired: true,
-          reference: "অংশীদারিত্ব",
-          question: "অংশীদারের সংখ্যা এবং পারিবারিক সম্পর্ক:",
-          note: "",
-          type: "text",
-          options: [],
-        },
-      ],
-    },
-    {
-      _id: "q1_9",
-      isRequired: true,
-      isFollowUpRequired: true,
-      question: "এর আগে আপনি কি অন্য কোনো ব্যবসা বা পেশায় নিয়োজিত ছিলেন?",
-      note: "যদি হ্যাঁ, তাহলে বিস্তারিত লিখুন",
-      type: "option",
-      options: ["হ্যাঁ", "না"],
-      questions: [
-        {
-          _id: "q1_9_1",
-          isRequired: true,
-          reference: "হ্যাঁ",
-          question: "এর আগে আপনি কী করতেন?",
-          note: "",
-          type: "text",
-          options: [],
-        },
-      ],
-    },
-    {
-      _id: "q1_10",
-      isRequired: true,
-      isFollowUpRequired: true,
-      question: "এই ব্যবসা বিক্রয়ের ক্ষেত্রে আপনার ভবিষ্যৎ পরিকল্পনা কী?",
-      note: "যদি হ্যাঁ, তাহলে পরিকল্পনাটি উল্লেখ করুন",
-      type: "option",
-      options: ["হ্যাঁ", "না"],
-      questions: [
-        {
-          _id: "q1_10_1",
-          isRequired: true,
-          reference: "হ্যাঁ",
-          question: "আপনার পরিকল্পনাটি কী?",
-          note: "",
-          type: "text",
-          options: [],
-        },
-        {
-          _id: "q1_10_2",
-          isRequired: true,
-          reference: "না",
-          question: "এই ব্যবসা নিয়ে আপনার ভবিষ্যৎ পরিকল্পনা কী?",
-          note: "",
-          type: "text",
-          options: [],
-        },
-      ],
-    },
-  ],
-  2: [
-    {
-      _id: "q2_1",
-      isRequired: true,
-      isFollowUpRequired: true,
-      question: "আপনি কি পরিবারের একমাত্র উপার্জনক্ষম সদস্য?",
-      note: "শুধুমাত্র 'না' হলে পরবর্তী প্রশ্ন প্রযোজ্য",
-      type: "option",
-      options: ["হ্যাঁ", "না"],
-      questions: [
-        {
-          _id: "q2_1_1",
-          isRequired: true,
-          reference: "না",
-          question: "পরিবারের অন্যান্য উপার্জনকারী সদস্য কতজন?",
-          note: "",
-          type: "number",
-          options: [],
-        },
-      ],
-    },
-    {
-      _id: "q2_2",
-      isRequired: true,
-      isFollowUpRequired: false,
-      question: "বিবাহিত / অবিবাহিত:",
-      note: "",
-      type: "option",
-      options: ["বিবাহিত", "অবিবাহিত"],
-    },
-    {
-      _id: "q2_3",
-      isRequired: false,
-      isFollowUpRequired: true,
-      question: "আপনা সন্তান আছে?",
-      note: "শুধুমাত্র 'হ্যাঁ' হলে পরবর্তী প্রশ্ন প্রযোজ্য",
-      type: "option",
-      options: ["হ্যাঁ", "না"],
-      questions: [
-        {
-          _id: "q2_3_1",
-          isRequired: false,
-          reference: "হ্যাঁ",
-          question: "ছেলে সংখ্যা",
-          note: "",
-          type: "number",
-          options: [],
-        },
-        {
-          _id: "q2_3_2",
-          isRequired: false,
-          reference: "হ্যাঁ",
-          question: "মেয়ে সংখ্যা",
-          note: "",
-          type: "number",
-          options: [],
-        },
-      ],
-    },
-  ],
-};
 
 const Question = ({ question, index, subindex, handleAddValue }) => {
   const questions =
@@ -253,7 +37,7 @@ const Question = ({ question, index, subindex, handleAddValue }) => {
       </div>
 
       <div className="space-y-2">
-        {question?.type === "text" && (
+        {question?.input_type === "text" && (
           <FormControl
             type="text"
             name={`question-${question._id}`}
@@ -263,7 +47,7 @@ const Question = ({ question, index, subindex, handleAddValue }) => {
           />
         )}
 
-        {question?.type === "number" && (
+        {question?.input_type === "number" && (
           <FormControl
             type="number"
             name={`question-${question._id}`}
@@ -273,7 +57,17 @@ const Question = ({ question, index, subindex, handleAddValue }) => {
           />
         )}
 
-        {question?.type === "option" && (
+        {question?.input_type === "date" && (
+          <FormControl
+            type="date"
+            name={`question-${question._id}`}
+            placeholder="Enter your answer"
+            value={question?.value || null}
+            onChange={(e) => handleAddValue(e.target.value, index, subindex)}
+          />
+        )}
+
+        {question?.input_type === "radio" && (
           <div className="space-y-2">
             {question?.options.map((option, optIndex) => {
               return (
@@ -285,20 +79,19 @@ const Question = ({ question, index, subindex, handleAddValue }) => {
                     type="radio"
                     name={`question-${question._id}`}
                     className="h-4 w-4 cursor-pointer border-accent"
-                    value={option}
-                    checked={question?.value === option}
-                    onChange={(e) =>
-                      handleAddValue(e.target.value, index, subindex)
-                    }
+                    value={option?.value}
+                    checked={question?.value === option?.value}
+                    onChange={(e) => handleAddValue(e.target.value, index)}
                   />
-                  <span className="text-gray-700">{option}</span>
+                  <span className="text-gray-700">{option?.label}</span>
                 </label>
               );
             })}
           </div>
         )}
 
-        {question?.type === "multiple-option" && (
+        {(question?.input_type === "checkbox" ||
+          question?.input_type === "select") && (
           <div className="space-y-2">
             {question.options.map((option, optIndex) => {
               const values = question?.value || [];
@@ -312,17 +105,17 @@ const Question = ({ question, index, subindex, handleAddValue }) => {
                     type="checkbox"
                     name={`question-${question._id}`}
                     className="h-4 w-4 cursor-pointer border-accent"
-                    value={option}
-                    checked={values.includes(option)}
+                    value={option?.value}
+                    checked={values.includes(option?.value)}
                     onChange={(e) => {
                       const newValues = e.target.checked
-                        ? [...values, option]
-                        : values.filter((v) => v !== option);
+                        ? [...values, option?.value]
+                        : values.filter((v) => v !== option?.value);
 
-                      handleAddValue(newValues, index, subindex);
+                      handleAddValue(newValues, index);
                     }}
                   />
-                  <span className="text-gray-700">{option}</span>
+                  <span className="text-gray-700">{option?.label}</span>
                 </label>
               );
             })}
@@ -351,53 +144,143 @@ const Question = ({ question, index, subindex, handleAddValue }) => {
 const OutletSurveyQuestionsPage = () => {
   const routeLocation = useLocation();
   const navigate = useNavigate();
+  const { user, userInfo } = useAuthenticationState();
 
-  const { outletCode, outletName, communication, salesPoint, phase } =
+  const { outletId, outletCode, outletName, communication, salesPoint, phase } =
     routeLocation?.state || {};
   const {
     _id,
     name,
     start_date,
     end_date,
-    total_questions,
-    isCompleted,
-    isEnable,
+    isActive,
+    questions: phase_questions,
   } = phase || {};
 
   const { isEnglish } = useLanguageState();
 
   const [questions, setQuestions] = useState([]);
+  const [surveys, setSurveys] = useState([]);
   const [successModal, setSuccessModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    setQuestions(questions_data?.[_id] || []);
-  }, [_id]);
+    setQuestions(phase_questions || []);
+  }, [phase_questions]);
 
-  const handleAddValue = (value, index, subindex) => {
+  useLayoutEffect(() => {
+    const getSurveys = async () => {
+      {
+        setIsLoading(true);
+        try {
+          const settings = {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: user,
+            },
+          };
+
+          const response = await fetch(
+            URLS.baseURL +
+              `/api/outlet-survey/create-surveys?phaseId=${_id}&outletId=${outletId}`,
+            settings,
+          );
+          const data = await response.json();
+          if (response?.status === 200) {
+            setSurveys(data?.data);
+          } else {
+            // alert("Error", resData?.message);
+          }
+        } catch (error) {
+          console.error("Error", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    getSurveys();
+  }, [user, _id, outletId]);
+
+  useEffect(() => {
+    if (surveys?.length > 0) {
+      const questions = phase_questions?.map((q) => {
+        const survey = surveys.find((s) => s.question === q._id);
+        return {
+          ...q,
+          ...((survey?.value !== undefined || survey?.value !== null) && {
+            value: survey?.value,
+          }),
+          ...((survey?.value_number !== undefined ||
+            survey?.value_number !== null) && {
+            value_number: survey?.value_number,
+          }),
+          ...(survey?.value_text && { value_text: survey?.value_text }),
+          ...(survey?.value_date && { value_date: survey?.value_date }),
+          ...(survey?.value_array && { value_array: survey?.value_array }),
+        };
+      });
+      setQuestions(questions);
+    }
+  }, [surveys, phase_questions]);
+
+  const handleAddValue = (value, index) => {
     const newQuestions = [...questions];
-    const targetQuestion =
-      subindex === undefined
-        ? newQuestions[index]
-        : newQuestions[index].questions[subindex];
+    const targetQuestion = newQuestions[index];
 
-    targetQuestion.value = value;
+    switch (targetQuestion?.input_type) {
+      case "text":
+      case "radio":
+      case "select":
+        targetQuestion.value_text = value;
+        targetQuestion.value = value;
+        break;
+      case "number":
+        targetQuestion.value_number = +value;
+        targetQuestion.value = +value;
+        break;
+      case "date":
+        targetQuestion.value_date = value;
+        targetQuestion.value = value;
+        break;
+      case "checkbox":
+        targetQuestion.value_array = value;
+        targetQuestion.value = value;
+        break;
+    }
     setQuestions(newQuestions);
   };
 
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
-      // const url = URLS.baseURL + "/app/outlet-survey";
-      // const payload = {
-      //   outletCode: outletCode,
-      //   salesPoint: salesPoint,
-      //   phase: _id,
-      // };
-      // const response = await axios.post(url, payload);
-      // if (response.status === 200) {
-      //   setSuccessModal(true);
-      // }
+
+      const payload = [];
+      for (const q of questions) {
+        if (q?.value === undefined || q?.value === null) continue;
+
+        const item = {
+          user: userInfo?._id,
+          outlet: outletId,
+          phase: _id,
+          question: q?._id,
+          input_type: q?.input_type,
+          value: q.value,
+        };
+
+        if (q?.value_number !== undefined) item.value_number = q.value_number;
+        if (q?.value_text) item.value_text = q.value_text;
+        if (q?.value_date) item.value_date = q.value_date;
+        if (q?.value_array) item.value_array = q.value_array;
+
+        payload.push(item);
+      }
+
+      const url = URLS.baseURL + "/api/outlet-survey/create-surveys";
+      const response = await axios.post(url, payload);
+      if (response.status === 200) {
+        setSuccessModal(true);
+      }
       setIsLoading(false);
     } catch (err) {
       console.error("Error submitting data:", err);
@@ -457,7 +340,7 @@ const OutletSurveyQuestionsPage = () => {
 
             {/* Submit Button */}
             <div className="flex justify-end">
-              <Button onClick={handleSubmit} isLoading={isLoading}>
+              <Button onClick={handleSubmit} isLoading={false}>
                 <span>{isEnglish ? "Submit" : "সাবমিট"}</span>
               </Button>
             </div>
