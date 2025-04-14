@@ -236,7 +236,7 @@ const OutletSurveyQuestionsPage = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="mb-6 text-2xl font-bold">{phase.name}</h1>
+      <h1 className="mb-6 text-2xl font-bold">{phase.name} ({phaseId})</h1>
 
       <div className="mb-8 space-y-2 rounded-lg bg-gray-50 p-4">
         <div className="grid grid-cols-2 gap-4">
