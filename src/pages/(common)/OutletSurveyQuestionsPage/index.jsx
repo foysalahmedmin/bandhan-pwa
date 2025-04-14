@@ -8,137 +8,127 @@ import useLanguageState from "@/hooks/state/useLanguageState";
 import { cn } from "@/lib/utils";
 import axios from "axios";
 import { Check } from "lucide-react";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const Question = ({ question, index, subindex, handleAddValue, questions }) => {
-  const allDependenciesSatisfied =
-    question?.dependencies?.every((d) =>
-      questions.some((q) => q._id === d.questionId && q.value === d.option),
-    ) ?? true;
+const Question = ({ question, index, handleAddValue, questions }) => {
+  const { isEnglish } = useLanguageState();
 
-  const isIndependent =
-    !question?.dependencies?.length || allDependenciesSatisfied;
+  const dependenciesSatisfied = useMemo(() => {
+    return (
+      question.dependencies?.every((dep) => {
+        const depQuestion = questions.find(
+          (q) => q._id === dep.question.toString(),
+        );
+        return depQuestion?.value === dep.value;
+      }) ?? true
+    );
+  }, [question.dependencies, questions]);
 
-  const isRequired = (question?.isRequired && !isIndependent) || false;
+  const isVisible = !question.isDependent || dependenciesSatisfied;
+  const isRequired = question.isRequired && dependenciesSatisfied;
+
+  const handleValueChange = (value) => {
+    let processedValue = value;
+
+    switch (question.input_type) {
+      case "number":
+        processedValue = Number(value);
+        break;
+      case "date":
+        processedValue = new Date(value).toISOString();
+        break;
+      case "checkbox":
+        processedValue = Array.isArray(value) ? value : [value];
+        break;
+      default:
+        processedValue = value;
+    }
+
+    handleAddValue(processedValue, index);
+  };
+
+  if (!isVisible) return null;
 
   return (
     <div
-      key={question._id}
-      className={cn("mb-6 rounded-lg border p-4", {
-        "mt-4 border-l-4 border-primary/50 pl-4": question?.isDependent,
-        hidden: question?.isDependent && !isIndependent,
+      className={cn(`mb-6 rounded-lg border p-4`, {
+        "border-l-4 border-primary pl-4": question.isDependent,
       })}
     >
       <div className="mb-3">
-        <p
-          className={cn(
-            "mb-1 font-medium text-gray-800",
-            isRequired && "font-semibold",
-          )}
-        >
-          {question?.serial}. {question?.question}
-          {question?.isRequired && <span className="ml-1 text-red-500">*</span>}
+        <p className={`font-medium text-primary`}>
+          {question.serial}. {question.question}
+          {isRequired && <span className="ml-1 text-red-500">*</span>}
         </p>
-        {question?.note && (
+        {question.note && (
           <small className="italic text-gray-500">{question.note}</small>
         )}
       </div>
 
       <div className="space-y-2">
-        {question?.input_type === "text" && (
+        {["text", "number", "date"].includes(question.input_type) && (
           <FormControl
-            type="text"
-            name={`question-${question._id}`}
-            placeholder="Enter your answer"
-            value={question?.value || null}
-            required={isRequired || false}
-            onChange={(e) => handleAddValue(e.target.value, index, subindex)}
+            type={question.input_type}
+            value={question.value || ""}
+            onChange={(e) => handleValueChange(e.target.value)}
+            required={isRequired}
+            placeholder={isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"}
           />
         )}
 
-        {question?.input_type === "number" && (
-          <FormControl
-            type="number"
-            name={`question-${question._id}`}
-            placeholder="Enter your answer"
-            value={question?.value || null}
-            required={isRequired || false}
-            onChange={(e) => handleAddValue(e.target.value, index, subindex)}
-          />
-        )}
-
-        {question?.input_type === "date" && (
-          <FormControl
-            type="date"
-            name={`question-${question._id}`}
-            placeholder="Enter your answer"
-            value={question?.value || null}
-            required={isRequired || false}
-            onChange={(e) => handleAddValue(e.target.value, index, subindex)}
-          />
-        )}
-
-        {question?.input_type === "radio" && (
+        {question.input_type === "radio" && (
           <div className="space-y-2">
-            {question?.options.map((option, optIndex) => {
-              return (
-                <label
-                  key={`${question._id}-${optIndex}`}
-                  className="flex cursor-pointer items-center space-x-2"
-                >
-                  <Radio
-                    type="radio"
-                    name={`question-${question._id}`}
-                    className="h-4 w-4 cursor-pointer border-accent"
-                    value={option?.value}
-                    required={(isRequired && !question?.value) || false}
-                    checked={question?.value === option?.value}
-                    onChange={(e) => handleAddValue(e.target.value, index)}
-                  />
-                  <span className="text-gray-700">{option?.label}</span>
-                </label>
-              );
-            })}
+            {question.options?.map((option) => (
+              <label key={option.value} className="flex items-center gap-2">
+                <Radio
+                  checked={question.value === option.value}
+                  onChange={() => handleValueChange(option.value)}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
           </div>
         )}
 
-        {(question?.input_type === "checkbox" ||
-          question?.input_type === "select") && (
+        {question.input_type === "checkbox" && (
           <div className="space-y-2">
-            {question.options.map((option, optIndex) => {
-              const values = question?.value || [];
-
-              return (
-                <label
-                  key={`${question._id}-${optIndex}`}
-                  className="flex items-center space-x-2"
-                >
-                  <Checkbox
-                    type="checkbox"
-                    name={`question-${question._id}`}
-                    className="h-4 w-4 cursor-pointer border-accent"
-                    value={option?.value}
-                    required={
-                      (isRequired &&
-                        !question?.value &&
-                        !question?.value?.length) ||
-                      false
-                    }
-                    checked={values.includes(option?.value)}
-                    onChange={(e) => {
-                      const newValues = e.target.checked
-                        ? [...values, option?.value]
-                        : values.filter((v) => v !== option?.value);
-
-                      handleAddValue(newValues, index);
-                    }}
-                  />
-                  <span className="text-gray-700">{option?.label}</span>
-                </label>
-              );
-            })}
+            {question.options?.map((option) => (
+              <label key={option.value} className="flex items-center gap-2">
+                <Checkbox
+                  checked={question.value?.includes(option.value)}
+                  onChange={(e) => {
+                    const newValue = e.target.checked
+                      ? [...(question.value || []), option.value]
+                      : (question.value || []).filter(
+                          (v) => v !== option.value,
+                        );
+                    handleValueChange(newValue);
+                  }}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
           </div>
+        )}
+
+        {question.input_type === "select" && (
+          <FormControl
+            as="select"
+            className="w-full rounded border p-2"
+            value={question.value || ""}
+            onChange={(e) => handleValueChange(e.target.value)}
+            required={isRequired}
+          >
+            <option value="">
+              {isEnglish ? "Select an option" : "একটি অপশন নির্বাচন করুন"}
+            </option>
+            {question.options?.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </FormControl>
         )}
       </div>
     </div>
@@ -146,254 +136,154 @@ const Question = ({ question, index, subindex, handleAddValue, questions }) => {
 };
 
 const OutletSurveyQuestionsPage = () => {
-  const routeLocation = useLocation();
+  const { state } = useLocation();
   const navigate = useNavigate();
-  const { user, userInfo } = useAuthenticationState();
-
-  const { outletId, outletCode, outletName, phase } =
-    routeLocation?.state || {};
-  const { _id, name, questions: phase_questions } = phase || {};
-
+  const { user } = useAuthenticationState();
   const { isEnglish } = useLanguageState();
 
   const [questions, setQuestions] = useState([]);
-  const [surveys, setSurveys] = useState([]);
   const [successModal, setSuccessModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const { outletId, outletCode, outletName, phase } = state || {};
+  const phaseId = phase?._id;
 
   useEffect(() => {
-    setQuestions(phase_questions || []);
-  }, [phase_questions]);
+    const fetchData = async () => {
+      try {
+        const { data } = await axios.get(
+          URLS.baseURL + `/api/outlet-survey/get-surveys`,
+          {
+            params: { phaseId, outletId },
+            headers: { Authorization: user },
+          },
+        );
 
-  useLayoutEffect(() => {
-    const getSurveys = async () => {
-      {
-        setIsLoading(true);
-        try {
-          if (!_id || !outletId) return;
-          const settings = {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: user,
-            },
-          };
+        const mergedQuestions =
+          phase?.questions?.map((q) => {
+            const survey = data.data.find((s) => s.question._id === q._id);
+            return {
+              ...q,
+              value: survey?.value,
+              value_text: survey?.value_text,
+              value_number: survey?.value_number,
+              value_date: survey?.value_date,
+              value_array: survey?.value_array || [],
+            };
+          }) || [];
 
-          const response = await fetch(
-            URLS.baseURL +
-              `/api/outlet-survey/get-surveys?phaseId=${_id}&outletId=${outletId}`,
-            settings,
-          );
-          const data = await response.json();
-          if (response?.status === 200) {
-            setSurveys(data?.data);
-          } else {
-            // alert("Error", resData?.message);
-          }
-        } catch (error) {
-          console.error("Error", error);
-        } finally {
-          setIsLoading(false);
-        }
+        setQuestions(mergedQuestions);
+      } catch (error) {
+        console.error("Error fetching surveys:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
-    getSurveys();
-  }, [user, _id, outletId]);
 
-  useEffect(() => {
-    if (surveys?.length > 0) {
-      const questions = phase_questions?.map((q) => {
-        const survey = surveys.find((s) => s.question === q._id);
-        return {
-          ...q,
-          ...((survey?.value !== undefined || survey?.value !== null) && {
-            value: survey?.value,
-          }),
-          ...((survey?.value_number !== undefined ||
-            survey?.value_number !== null) && {
-            value_number: survey?.value_number,
-          }),
-          ...(survey?.value_text && { value_text: survey?.value_text }),
-          ...(survey?.value_date && { value_date: survey?.value_date }),
-          ...(survey?.value_array && { value_array: survey?.value_array }),
-        };
-      });
-      setQuestions(questions);
-    }
-  }, [surveys]);
-
-  const handleAddValue = (value, index) => {
-    const newQuestions = [...questions];
-    const targetQuestion = newQuestions[index];
-
-    switch (targetQuestion?.input_type) {
-      case "text":
-      case "radio":
-      case "select":
-        targetQuestion.value_text = value;
-        targetQuestion.value = value;
-        break;
-      case "number":
-        targetQuestion.value_number = +value;
-        targetQuestion.value = +value;
-        break;
-      case "date":
-        targetQuestion.value_date = value;
-        targetQuestion.value = value;
-        break;
-      case "checkbox":
-        targetQuestion.value_array = value;
-        targetQuestion.value = value;
-        break;
-    }
-    setQuestions(newQuestions);
-  };
+    if (phaseId && outletId) fetchData();
+  }, [phaseId, outletId, user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const surveys = questions.reduce((acc, q) => {
-        if (q?.value === undefined || q?.value === null) return acc;
-
-        const item = {
-          user: userInfo?._id,
+      const payload = questions
+        .filter((q) => q.value !== undefined && q.value !== null)
+        .map((q) => ({
+          user: user?.id,
           outlet: outletId,
-          phase: _id,
+          phase: phaseId,
           question: q._id,
           input_type: q.input_type,
           value: q.value,
-        };
+          ...(q.input_type === "number" && { value_number: q.value }),
+          ...(q.input_type === "date" && { value_date: q.value }),
+          ...(q.input_type === "checkbox" && { value_array: q.value }),
+        }));
 
-        if (q.value_number !== undefined) item.value_number = q.value_number;
-        if (typeof q.value_text === "string" && q.value_text.trim() !== "")
-          item.value_text = q.value_text;
-        if (q.value_date) item.value_date = q.value_date;
-        if (Array.isArray(q.value_array) && q.value_array.length)
-          item.value_array = q.value_array;
-
-        acc.push(item);
-        return acc;
-      }, []);
-
-      console.log("payload", surveys);
-
-      if (surveys.length === 0) {
-        alert("No valid responses to submit.");
-        return;
-      }
-
-      const url = `${URLS.baseURL}/api/outlet-survey/create-surveys`;
-      const response = await axios.post(url, { surveys: surveys });
-
-      console.log("response", response);
-      if (response.status === 200) setSuccessModal(true);
-    } catch (err) {
-      console.error(
-        "Error submitting data:",
-        err.response?.data || err.message,
+      await axios.post(
+        URLS.baseURL + "/api/outlet-survey/create-surveys",
+        { surveys: payload },
+        { headers: { Authorization: user } },
       );
-      alert("Something went wrong");
+
+      setSuccessModal(true);
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert(isEnglish ? "Submission failed" : "জমা দেওয়া ব্যর্থ হয়েছে");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleValueUpdate = (value, index) => {
+    const updated = [...questions];
+    updated[index].value = value;
+    setQuestions(updated);
+  };
+
+  if (!phase || isLoading) {
+    return <div>{isEnglish ? "Loading..." : "লোড হচ্ছে..."}</div>;
+  }
+
   return (
-    <div className="min-h-screen">
-      <section className="py-4">
-        <div className="container space-y-4">
-          <div className="space-y-2">
-            <h3>{name}</h3>
-            <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
-              <span className="text-sm leading-none">
-                {isEnglish ? "Outlet Name" : "আউটলেট নাম"}
-              </span>
-              <FormControl
-                as="div"
-                className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
-              >
-                {outletName}
-              </FormControl>
-            </div>
-            <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
-              <span className="text-sm leading-none">
-                {isEnglish ? "Outlet Code" : "আউটলেট কোড"}
-              </span>
-              <FormControl
-                as="div"
-                className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
-              >
-                {outletCode}
-              </FormControl>
-            </div>
-          </div>
-          <form onSubmit={handleSubmit}>
-            {/* PCM Section */}
-            <div className="rounded-md border border-primary">
-              <strong className="block w-full bg-primary py-2 text-center font-semibold text-primary-foreground">
-                {isEnglish ? "Survy Questions" : "সার্ভিস প্রশ্নসমূহ"}
-              </strong>
-              <div className="p-2">
-                <div className="grid grid-cols-1">
-                  {questions?.map((question, index) => (
-                    <Question
-                      key={index}
-                      index={index}
-                      question={question}
-                      handleAddValue={handleAddValue}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
+    <div className="container mx-auto p-4">
+      <h1 className="mb-6 text-2xl font-bold">{phase.name}</h1>
 
-            {/* Submit Button */}
-            <div className="flex justify-end">
-              {surveys?.length > 0 ? (
-                <Button disabled={true}>
-                  <span>{isEnglish ? "Update" : "অপডেট"}</span>
-                </Button>
-              ) : (
-                <Button type="submit" isLoading={isLoading}>
-                  <span>{isEnglish ? "Submit" : "সাবমিট"}</span>
-                </Button>
-              )}
-            </div>
+      <div className="mb-8 space-y-2 rounded-lg bg-gray-50 p-4">
+        <div className="grid grid-cols-2 gap-4">
+          <span className="font-medium">
+            {isEnglish ? "Outlet Code" : "আউটলেট কোড"}
+          </span>
+          <span>{outletCode}</span>
 
-            {/* Success Modal */}
-            {successModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                <div className="m-4 w-full max-w-md rounded-lg bg-white p-8">
-                  <div className="text-center">
-                    <Check className="mx-auto mb-4 h-16 w-16 text-green-500" />
-                    <span className="mb-2 text-xl font-bold">
-                      {isEnglish ? "Submit Success" : "সাবমিট সাকসেস"}
-                    </span>
-                    <p className="mb-4 text-gray-600">
-                      {isEnglish
-                        ? "Your feedback has been successfully submitted."
-                        : "আপনার ফিডব্যাক সফলভাবে জমা দেওয়া হয়েছে."}
-                    </p>
-                    <button
-                      className="hover:bg-primary-dark rounded-lg bg-primary px-4 py-2 text-white transition-colors"
-                      onClick={() => {
-                        setSuccessModal(false);
-                        navigate(`/`, {
-                          replace: true,
-                        });
-                      }}
-                    >
-                      {isEnglish ? "Close" : "বন্ধ করুন"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </form>
+          <span className="font-medium">
+            {isEnglish ? "Outlet Name" : "আউটলেটের নাম"}
+          </span>
+          <span>{outletName}</span>
         </div>
-      </section>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        {questions.map((question, index) => (
+          <Question
+            key={question._id}
+            index={index}
+            question={question}
+            questions={questions}
+            handleAddValue={handleValueUpdate}
+          />
+        ))}
+
+        <div className="mt-8 flex justify-end">
+          <Button type="submit" isLoading={isLoading}>
+            {isLoading
+              ? isEnglish
+                ? "Saving..."
+                : "সেভ হচ্ছে..."
+              : isEnglish
+                ? "Save Survey"
+                : "সার্ভে সেভ করুন"}
+          </Button>
+        </div>
+      </form>
+
+      {successModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="rounded-lg bg-white p-8 text-center">
+            <Check className="mx-auto mb-4 text-green-500" size={40} />
+            <h2 className="mb-2 text-xl font-bold">
+              {isEnglish
+                ? "Submission Successful!"
+                : "সফলভাবে জমা দেওয়া হয়েছে!"}
+            </h2>
+            <Button onClick={() => navigate(-1)}>
+              {isEnglish ? "Return to Dashboard" : "ড্যাশবোর্ডে ফিরে যান"}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
