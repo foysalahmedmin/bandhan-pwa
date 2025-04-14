@@ -245,41 +245,53 @@ const OutletSurveyQuestionsPage = () => {
     setQuestions(newQuestions);
   };
 
-  const handleSubmit = async () => {
-    try {
-      setIsLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-      const payload = [];
-      for (const q of questions) {
-        if (q?.value === undefined || q?.value === null) continue;
+    try {
+      const surveys = questions.reduce((acc, q) => {
+        if (q?.value === undefined || q?.value === null) return acc;
 
         const item = {
-          user: userInfo?._id,
           outlet: outletId,
           phase: _id,
-          question: q?._id,
-          input_type: q?.input_type,
+          question: q._id,
+          input_type: q.input_type,
           value: q.value,
         };
 
-        if (q?.value_number !== undefined) item.value_number = q.value_number;
-        if (q?.value_text) item.value_text = q.value_text;
-        if (q?.value_date) item.value_date = q.value_date;
-        if (q?.value_array) item.value_array = q.value_array;
+        if (q.value_number !== undefined) item.value_number = q.value_number;
+        if (typeof q.value_text === "string" && q.value_text.trim() !== "")
+          item.value_text = q.value_text;
+        if (q.value_date) item.value_date = q.value_date;
+        if (Array.isArray(q.value_array) && q.value_array.length)
+          item.value_array = q.value_array;
 
-        payload.push(item);
+        acc.push(item);
+        return acc;
+      }, []);
+
+      console.log("payload", surveys);
+
+      if (surveys.length === 0) {
+        alert("No valid responses to submit.");
+        return;
       }
 
-      const url = URLS.baseURL + "/api/outlet-survey/create-surveys";
-      const response = await axios.post(url, payload);
-      if (response.status === 200) {
-        setSuccessModal(true);
-      }
-      setIsLoading(false);
+      const url = `${URLS.baseURL}/api/outlet-survey/create-surveys`;
+      const response = await axios.post(url, { surveys: surveys });
+
+      console.log("response", response);
+      if (response.status === 200) setSuccessModal(true);
     } catch (err) {
-      console.error("Error submitting data:", err);
-      setIsLoading(false);
+      console.error(
+        "Error submitting data:",
+        err.response?.data || err.message,
+      );
       alert("Something went wrong");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -312,7 +324,7 @@ const OutletSurveyQuestionsPage = () => {
               </FormControl>
             </div>
           </div>
-          <>
+          <form onSubmit={handleSubmit}>
             {/* PCM Section */}
             <div className="rounded-md border border-primary">
               <strong className="block w-full bg-primary py-2 text-center font-semibold text-primary-foreground">
@@ -334,9 +346,15 @@ const OutletSurveyQuestionsPage = () => {
 
             {/* Submit Button */}
             <div className="flex justify-end">
-              <Button onClick={handleSubmit} isLoading={isLoading}>
-                <span>{isEnglish ? "Submit" : "সাবমিট"}</span>
-              </Button>
+              {surveys?.length > 0 ? (
+                <Button disabled={true}>
+                  <span>{isEnglish ? "Update" : "অপডেট"}</span>
+                </Button>
+              ) : (
+                <Button type="submit" isLoading={isLoading}>
+                  <span>{isEnglish ? "Submit" : "সাবমিট"}</span>
+                </Button>
+              )}
             </div>
 
             {/* Success Modal */}
@@ -368,7 +386,7 @@ const OutletSurveyQuestionsPage = () => {
                 </div>
               </div>
             )}
-          </>
+          </form>
         </div>
       </section>
     </div>
