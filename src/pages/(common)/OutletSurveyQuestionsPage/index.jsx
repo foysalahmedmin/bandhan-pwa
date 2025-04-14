@@ -146,16 +146,9 @@ const OutletSurveyQuestionsPage = () => {
   const navigate = useNavigate();
   const { user, userInfo } = useAuthenticationState();
 
-  const { outletId, outletCode, outletName, communication, salesPoint, phase } =
+  const { outletId, outletCode, outletName, phase } =
     routeLocation?.state || {};
-  const {
-    _id,
-    name,
-    start_date,
-    end_date,
-    isActive,
-    questions: phase_questions,
-  } = phase || {};
+  const { _id, name, questions: phase_questions } = phase || {};
 
   const { isEnglish } = useLanguageState();
 
@@ -173,6 +166,8 @@ const OutletSurveyQuestionsPage = () => {
       {
         setIsLoading(true);
         try {
+          if (!_id || !outletId) return;
+
           const settings = {
             method: "GET",
             headers: {
@@ -192,8 +187,10 @@ const OutletSurveyQuestionsPage = () => {
           } else {
             // alert("Error", resData?.message);
           }
+          setIsLoading(false);
         } catch (error) {
           console.error("Error", error);
+          setIsLoading(false);
         } finally {
           setIsLoading(false);
         }
@@ -222,7 +219,7 @@ const OutletSurveyQuestionsPage = () => {
       });
       setQuestions(questions);
     }
-  }, [surveys, phase_questions]);
+  }, [surveys]);
 
   const handleAddValue = (value, index) => {
     const newQuestions = [...questions];
@@ -340,7 +337,7 @@ const OutletSurveyQuestionsPage = () => {
 
             {/* Submit Button */}
             <div className="flex justify-end">
-              <Button onClick={handleSubmit} isLoading={false}>
+              <Button onClick={handleSubmit} isLoading={isLoading}>
                 <span>{isEnglish ? "Submit" : "সাবমিট"}</span>
               </Button>
             </div>
