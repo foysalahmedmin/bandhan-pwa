@@ -16,12 +16,12 @@ const Question = ({ question, index, handleAddValue, questions }) => {
 
   const dependenciesSatisfied = useMemo(() => {
     return (
-      question.dependencies?.every((dep) => {
+      question.dependencies?.some((dep) => {
         const depQuestion = questions.find(
           (q) => q._id === dep.question.toString(),
         );
         return depQuestion?.value === dep.value;
-      }) ?? true
+      }) ?? false
     );
   }, [question.dependencies, questions]);
 
@@ -101,8 +101,8 @@ const Question = ({ question, index, handleAddValue, questions }) => {
                     const newValue = e.target.checked
                       ? [...(question.value || []), option.value]
                       : (question.value || []).filter(
-                          (v) => v !== option.value,
-                        );
+                        (v) => v !== option.value,
+                      );
                     handleValueChange(newValue);
                   }}
                 />
