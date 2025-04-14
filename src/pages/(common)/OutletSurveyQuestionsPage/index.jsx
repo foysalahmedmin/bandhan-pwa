@@ -167,7 +167,6 @@ const OutletSurveyQuestionsPage = () => {
         setIsLoading(true);
         try {
           if (!_id || !outletId) return;
-
           const settings = {
             method: "GET",
             headers: {
@@ -178,7 +177,7 @@ const OutletSurveyQuestionsPage = () => {
 
           const response = await fetch(
             URLS.baseURL +
-              `/api/outlet-survey/create-surveys?phaseId=${_id}&outletId=${outletId}`,
+              `/api/outlet-survey/get-surveys?phaseId=${_id}&outletId=${outletId}`,
             settings,
           );
           const data = await response.json();
@@ -187,10 +186,8 @@ const OutletSurveyQuestionsPage = () => {
           } else {
             // alert("Error", resData?.message);
           }
-          setIsLoading(false);
         } catch (error) {
           console.error("Error", error);
-          setIsLoading(false);
         } finally {
           setIsLoading(false);
         }
