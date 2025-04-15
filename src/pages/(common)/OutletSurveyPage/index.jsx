@@ -5,6 +5,7 @@ import URLS from "@/constants/urls";
 import useAuthenticationState from "@/hooks/state/useAuthenticationState";
 import useLanguageState from "@/hooks/state/useLanguageState";
 import { cn } from "@/lib/utils";
+import axios from "axios";
 import { CalendarDays } from "lucide-react";
 import { useLayoutEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -67,25 +68,39 @@ const OutletSurveyPage = () => {
   }, [user, selectedOutlet?.value]);
 
   useLayoutEffect(() => {
+    if (!outlets || outlets?.length <= 0) return;
+    const outletCodes = outlets?.map((outlet) => outlet?.value);
     const getPhases = async () => {
       {
         setIsLoading(true);
         try {
-          const settings = {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: user,
+          const now = new Date();
+          const currentMonth = `${now.getMonth() + 1}-${now.getFullYear()}`; // "4-2025"
+          const currentYear = now.getFullYear();
+          const response = await axios.post(
+            URLS.baseURL +
+              `/api/outlet-survey/get-phases-with-outlets-surveys?month=${currentMonth}&year=${currentYear}`,
+            {
+              outletCodes: outletCodes || [],
             },
-          };
-
-          const response = await fetch(
-            URLS.baseURL + `/api/outlet-survey/get-phases`,
-            settings,
+            { headers: { Authorization: user } },
           );
-          const data = await response.json();
+          // const settings = {
+          //   method: "GET",
+          //   headers: {
+          //     "Content-Type": "application/json",
+          //     Authorization: user,
+          //   },
+          // };
+
+          // const response = await fetch(
+          //   URLS.baseURL +
+          //     `/api/outlet-survey/get-phases-with-outlets-surveys?outletCodes=${outletCodes}`,
+          //   settings,
+          // );
+          // const data = await response.json();
           if (response?.status === 200) {
-            setPhase(data?.data);
+            setPhase(response?.data?.data);
           } else {
             // alert("Error", resData?.message);
           }
@@ -97,7 +112,7 @@ const OutletSurveyPage = () => {
       }
     };
     getPhases();
-  }, [user]);
+  }, [user, outlets]);
   return (
     <main>
       <section className="py-4">
@@ -192,7 +207,7 @@ const OutletSurveyPage = () => {
               </div>
             )}
           </div>
-          {selectedOutlet?.value && (
+          {phases?.length > 0 && (
             <div className="space-y-2 border border-primary p-2">
               <span className="block font-semibold text-primary">
                 {isEnglish ? "Survey Phases" : "সার্ভে ফেইজ"}
@@ -255,9 +270,100 @@ const OutletSurveyPage = () => {
                           {phase?.questions?.length || 0}
                         </span>
                       </p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <p className="text-sm font-medium">
+                          Total Outlet:{" "}
+                          <span className="font-bold">
+                            {outlets?.length || 0}
+                          </span>
+                        </p>
+                        <div className="w-1 self-stretch bg-border" />
+                        <p className="text-sm font-medium">
+                          Completed:{" "}
+                          <span className="font-bold">
+                            {phase?.completed_outlets || 0}
+                          </span>
+                        </p>
+                        <div className="w-1 self-stretch bg-border" />
+                        <p className="text-sm font-medium">
+                          {phase?.isComplete ? (
+                            <span className="text-green-500">
+                              Complete All Outlet
+                            </span>
+                          ) : (
+                            <span>Not Complete Yet</span>
+                          )}
+                        </p>
+                      </div>
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+          {selectedPhase?._id && outletDetails?._id && (
+            <div
+              className={cn(
+                "cursor-pointer rounded-lg border bg-white/50 p-4 shadow-md backdrop-blur transition hover:bg-white/75",
+                {
+                  "pointer-events-none bg-white/25 opacity-50":
+                    !selectedPhase?.isActive ||
+                    !(selectedPhase?.questions?.length > 0),
+                },
+                {
+                  "bg-white/75 outline outline-2 outline-primary":
+                    selectedPhase?._id === selectedPhase?._id,
+                },
+              )}
+            >
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <h5 className="text-lg font-semibold">{selectedPhase?.name}</h5>
+                <div className="w-1 self-stretch bg-border" />
+                <h5 className="text-lg font-semibold">{outletDetails?.name}</h5>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                <span>
+                  {new Date(selectedPhase?.start_date).toLocaleDateString(
+                    "en-US",
+                    {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    },
+                  )}
+                </span>
+                <span className="mx-2">-</span>
+                <span>
+                  {new Date(selectedPhase?.end_date).toLocaleDateString(
+                    "en-US",
+                    {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    },
+                  )}
+                </span>
+              </div>
+              <p className="mt-2 text-sm font-medium">
+                Total Questions:{" "}
+                <span className="font-bold">
+                  {selectedPhase?.questions?.length || 0}
+                </span>
+              </p>
+              <div className="flex items-center gap-2">
+                <p className="mt-2 text-sm font-medium">
+                  Total Outlet:{" "}
+                  <span className="font-bold">{outlets?.length || 0}</span>
+                </p>
+                <p className="mt-2 text-sm font-medium">
+                  Completed:{" "}
+                  <span className="font-bold">
+                    {selectedPhase?.completed_outlets || 0}
+                  </span>
+                </p>
               </div>
             </div>
           )}
@@ -276,9 +382,7 @@ const OutletSurveyPage = () => {
                   },
                 })
               }
-              disabled={
-                !selectedOutlet?.value || !selectedPhase?._id || isLoading
-              }
+              disabled={!outletDetails?._id || !selectedPhase?._id || isLoading}
             >
               <span>{isEnglish ? "Outlet Survey" : "আউটলেট সার্ভে"}</span>
             </Button>

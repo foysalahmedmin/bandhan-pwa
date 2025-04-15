@@ -25,13 +25,18 @@ const Question = ({
         const depQuestion = questions.find(
           (q) => q._id === dep.question.toString(),
         );
-        return dep.value === "{{anything}}"
-          ? !!(
-              depQuestion?.value != "" &&
-              depQuestion?.value != null &&
-              depQuestion?.value !== undefined
-            )
-          : depQuestion?.value === dep.value;
+
+        if (dep.value === "{{anything}}") {
+          return !!(
+            depQuestion?.value != "" &&
+            depQuestion?.value != null &&
+            depQuestion?.value !== undefined
+          );
+        }
+        if (Array.isArray(depQuestion?.value)) {
+          return depQuestion?.value.some((val) => val === dep?.value);
+        }
+        return depQuestion?.value === dep.value;
       }) ?? false
     );
   }, [question.dependencies, questions]);
@@ -67,6 +72,8 @@ const Question = ({
 
   if (!isVisible) return null;
 
+  console.log(question?.value);
+
   return (
     <div
       className={cn(`mb-6 rounded-lg p-4`, {
@@ -84,10 +91,24 @@ const Question = ({
       </div>
 
       <div className="space-y-2">
-        {["text", "number", "date"].includes(question.input_type) && (
+        {["text", "number"].includes(question.input_type) && (
           <FormControl
             type={question.input_type}
             value={question.value || ""}
+            onChange={(e) => handleValueChange(e.target.value)}
+            required={isRequired}
+            placeholder={isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"}
+          />
+        )}
+
+        {question.input_type === "date" && (
+          <FormControl
+            type={"date"}
+            value={
+              question.value
+                ? new Date(question.value).toISOString().split("T")[0]
+                : ""
+            }
             onChange={(e) => handleValueChange(e.target.value)}
             required={isRequired}
             placeholder={isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"}
@@ -165,6 +186,7 @@ const OutletSurveyQuestionsPage = () => {
   const { outlet, phase } = state || {};
   const phaseId = phase?._id;
   const outletId = outlet?._id;
+  const outletCode = outlet?.code;
 
   const data = {
     outlet,
@@ -216,6 +238,7 @@ const OutletSurveyQuestionsPage = () => {
         .map((q) => ({
           user: userInfo?._id,
           outlet: outletId,
+          outlet_code: outletCode,
           phase: phaseId,
           question: q._id,
           input_type: q.input_type,
@@ -225,7 +248,6 @@ const OutletSurveyQuestionsPage = () => {
           ...(q.input_type === "checkbox" && { value_array: q.value }),
         }));
 
-      console.log({ surveys: payload });
       const res = await axios.post(
         URLS.baseURL + "/api/outlet-survey/create-surveys",
         { surveys: payload },
