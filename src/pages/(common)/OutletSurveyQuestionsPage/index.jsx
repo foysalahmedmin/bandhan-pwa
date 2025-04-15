@@ -11,17 +11,27 @@ import { Check } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const Question = ({ question, index, handleAddValue, questions }) => {
-  console.log('question', { question, index, questions });
+const Question = ({
+  question,
+  index,
+  handleAddValue,
+  questions,
+  data = {},
+}) => {
   const { isEnglish } = useLanguageState();
-
   const dependenciesSatisfied = useMemo(() => {
     return (
       question.dependencies?.some((dep) => {
         const depQuestion = questions.find(
           (q) => q._id === dep.question.toString(),
         );
-        return depQuestion?.value === dep.value;
+        return dep.value === "{{anything}}"
+          ? !!(
+              depQuestion?.value != "" &&
+              depQuestion?.value != null &&
+              depQuestion?.value !== undefined
+            )
+          : depQuestion?.value === dep.value;
       }) ?? false
     );
   }, [question.dependencies, questions]);
@@ -29,8 +39,12 @@ const Question = ({ question, index, handleAddValue, questions }) => {
   const isVisible = !question.isDependent || dependenciesSatisfied;
   const isRequired = question.isRequired && dependenciesSatisfied;
 
-  console.log('dependenciesSatisfied', dependenciesSatisfied);
-
+  const question_text = question?.question?.replace(
+    /{{\s*([\w.]+)\s*}}/g,
+    (_, path) => {
+      return path.split(".").reduce((obj, key) => obj?.[key], data) ?? "";
+    },
+  );
   const handleValueChange = (value) => {
     let processedValue = value;
 
@@ -51,19 +65,17 @@ const Question = ({ question, index, handleAddValue, questions }) => {
     handleAddValue(processedValue, index);
   };
 
-  console.log('isVisible', isVisible)
-
   if (!isVisible) return null;
 
   return (
     <div
-      className={cn(`mb-6 rounded-lg border p-4`, {
-        "border-l-4 border-primary pl-4": question.isDependent,
+      className={cn(`mb-6 rounded-lg p-4`, {
+        "border-l-4 border-l-primary/15 pl-3": question.isDependent,
       })}
     >
       <div className="mb-3">
         <p className={`font-medium text-primary`}>
-          {question.serial}. {question.question}
+          {question.serial}. {question_text}
           {isRequired && <span className="ml-1 text-red-500">*</span>}
         </p>
         {question.note && (
@@ -106,8 +118,8 @@ const Question = ({ question, index, handleAddValue, questions }) => {
                     const newValue = e.target.checked
                       ? [...(question.value || []), option.value]
                       : (question.value || []).filter(
-                        (v) => v !== option.value,
-                      );
+                          (v) => v !== option.value,
+                        );
                     handleValueChange(newValue);
                   }}
                 />
@@ -143,15 +155,21 @@ const Question = ({ question, index, handleAddValue, questions }) => {
 const OutletSurveyQuestionsPage = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuthenticationState();
+  const { user, userInfo } = useAuthenticationState();
   const { isEnglish } = useLanguageState();
 
   const [questions, setQuestions] = useState([]);
   const [successModal, setSuccessModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { outletId, outletCode, outletName, phase } = state || {};
+  const { outlet, phase } = state || {};
   const phaseId = phase?._id;
+  const outletId = outlet?._id;
+
+  const data = {
+    outlet,
+    state,
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -159,12 +177,10 @@ const OutletSurveyQuestionsPage = () => {
         const { data } = await axios.get(
           URLS.baseURL + `/api/outlet-survey/get-surveys`,
           {
-            params: { phaseId, outletId },
+            params: { phaseId: phaseId, outletId: outletId },
             headers: { Authorization: user },
           },
         );
-
-        console.log('data', data);
 
         const mergedQuestions =
           phase?.questions?.map((q) => {
@@ -198,7 +214,7 @@ const OutletSurveyQuestionsPage = () => {
       const payload = questions
         .filter((q) => q.value !== undefined && q.value !== null)
         .map((q) => ({
-          user: user?.id,
+          user: userInfo?._id,
           outlet: outletId,
           phase: phaseId,
           question: q._id,
@@ -209,12 +225,14 @@ const OutletSurveyQuestionsPage = () => {
           ...(q.input_type === "checkbox" && { value_array: q.value }),
         }));
 
-      await axios.post(
+      console.log({ surveys: payload });
+      const res = await axios.post(
         URLS.baseURL + "/api/outlet-survey/create-surveys",
         { surveys: payload },
         { headers: { Authorization: user } },
       );
 
+      console.log("Submission response:", res);
       setSuccessModal(true);
     } catch (error) {
       console.error("Submission error:", error);
@@ -231,67 +249,135 @@ const OutletSurveyQuestionsPage = () => {
   };
 
   if (!phase || isLoading) {
-    return <div>{isEnglish ? "Loading..." : "লোড হচ্ছে..."}</div>;
+    return (
+      <div className="container py-4">
+        {isEnglish ? "Loading..." : "লোড হচ্ছে..."}
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="mb-6 text-2xl font-bold">{phase.name}</h1>
+    <main>
+      <section className="py-4">
+        <div className="container">
+          <h1 className="mb-6 text-2xl font-bold">{phase?.name}</h1>
 
-      <div className="mb-8 space-y-2 rounded-lg bg-gray-50 p-4">
-        <div className="grid grid-cols-2 gap-4">
-          <span className="font-medium">
-            {isEnglish ? "Outlet Code" : "আউটলেট কোড"}
-          </span>
-          <span>{outletCode}</span>
+          {Object.keys(outlet || {})?.length > 0 && (
+            <div className="space-y-2">
+              <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
+                <span className="text-sm leading-none">
+                  {isEnglish ? "Outlet Name" : "আউটলেট নাম"}
+                </span>
+                <FormControl
+                  as="div"
+                  className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
+                >
+                  {outlet?.name}
+                </FormControl>
+              </div>
+              <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
+                <span className="text-sm leading-none">
+                  {isEnglish ? "Outlet Code" : "আউটলেট কোড"}
+                </span>
+                <FormControl
+                  as="div"
+                  className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
+                >
+                  {outlet?.code}
+                </FormControl>
+              </div>
+              <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
+                <span className="text-sm leading-none">
+                  {isEnglish ? "Retailer Name" : "রিটেলার নাম"}
+                </span>
+                <FormControl
+                  as="div"
+                  className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
+                >
+                  {outlet?.retailer?.name}
+                </FormControl>
+              </div>
+              <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
+                <span className="text-sm leading-none">
+                  {isEnglish ? "Retailer Number" : "রিটেলার নাম্বার"}
+                </span>
+                <FormControl
+                  as="div"
+                  className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
+                >
+                  {outlet?.retailer?.phone}
+                </FormControl>
+              </div>
+              <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
+                <span className="text-sm leading-none">
+                  {isEnglish ? "Retailer Address" : "রিটেলার ঠিকানা"}
+                </span>
+                <FormControl
+                  as="div"
+                  className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
+                >
+                  {outlet?.retailer?.address}
+                </FormControl>
+              </div>
+              <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
+                <span className="text-sm leading-none">
+                  {isEnglish ? "Retailer Category" : "রিটেলার ক্যাটাগরি"}
+                </span>
+                <FormControl
+                  as="div"
+                  className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
+                >
+                  {outlet?.category}
+                </FormControl>
+              </div>
+            </div>
+          )}
 
-          <span className="font-medium">
-            {isEnglish ? "Outlet Name" : "আউটলেটের নাম"}
-          </span>
-          <span>{outletName}</span>
+          <form onSubmit={handleSubmit}>
+            <div className="border p-2">
+              {questions.map((question, index) => (
+                <Question
+                  key={question._id}
+                  index={index}
+                  data={data}
+                  question={question}
+                  questions={questions}
+                  handleAddValue={handleValueUpdate}
+                />
+              ))}
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <Button type="submit" isLoading={isLoading}>
+                {isLoading
+                  ? isEnglish
+                    ? "Saving..."
+                    : "সেভ হচ্ছে..."
+                  : isEnglish
+                    ? "Save Survey"
+                    : "সার্ভে সেভ করুন"}
+              </Button>
+            </div>
+          </form>
+
+          {successModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="rounded-lg bg-white p-8 text-center">
+                <Check className="mx-auto mb-4 text-green-500" size={40} />
+                <h2 className="mb-2 text-xl font-bold">
+                  {isEnglish
+                    ? "Submission Successful!"
+                    : "সফলভাবে জমা দেওয়া হয়েছে!"}
+                </h2>
+                <Button onClick={() => navigate(-1)}>
+                  {isEnglish ? "Return to Dashboard" : "ড্যাশবোর্ডে ফিরে যান"}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-
-      <form onSubmit={handleSubmit}>
-        {questions.map((question, index) => (
-          <Question
-            key={question._id}
-            index={index}
-            question={question}
-            questions={questions}
-            handleAddValue={handleValueUpdate}
-          />
-        ))}
-
-        <div className="mt-8 flex justify-end">
-          <Button type="submit" isLoading={isLoading}>
-            {isLoading
-              ? isEnglish
-                ? "Saving..."
-                : "সেভ হচ্ছে..."
-              : isEnglish
-                ? "Save Survey"
-                : "সার্ভে সেভ করুন"}
-          </Button>
-        </div>
-      </form>
-
-      {successModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="rounded-lg bg-white p-8 text-center">
-            <Check className="mx-auto mb-4 text-green-500" size={40} />
-            <h2 className="mb-2 text-xl font-bold">
-              {isEnglish
-                ? "Submission Successful!"
-                : "সফলভাবে জমা দেওয়া হয়েছে!"}
-            </h2>
-            <Button onClick={() => navigate(-1)}>
-              {isEnglish ? "Return to Dashboard" : "ড্যাশবোর্ডে ফিরে যান"}
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
+      </section>
+    </main>
   );
 };
 

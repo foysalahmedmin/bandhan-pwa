@@ -121,7 +121,7 @@ const OutletSurveyPage = () => {
                 />
               </label>
             </div>
-            {Object.keys(outletDetails)?.length > 0 && (
+            {Object.keys(outletDetails || {})?.length > 0 && (
               <div className="space-y-2">
                 <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
                   <span className="text-sm leading-none">
@@ -266,6 +266,7 @@ const OutletSurveyPage = () => {
               onClick={() =>
                 navigate(`/outlet-survey-questions`, {
                   state: {
+                    outlet: outletDetails,
                     outletId: outletDetails?._id,
                     outletCode: outletDetails?.code,
                     outletName: outletDetails?.name,
