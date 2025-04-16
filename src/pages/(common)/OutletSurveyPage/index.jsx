@@ -23,6 +23,7 @@ const OutletSurveyPage = () => {
   const [selectedPhase, setSelectedPhase] = useState({});
 
   const [outletDetails, setOutletDetails] = useState({});
+  const [outletStatus, setOutletStatus] = useState({});
 
   const [phases, setPhase] = useState([]);
 
@@ -75,7 +76,7 @@ const OutletSurveyPage = () => {
         setIsLoading(true);
         try {
           const now = new Date();
-          const currentMonth = `${now.getMonth() + 1}-${now.getFullYear()}`; // "4-2025"
+          const currentMonth = `${now.getMonth() + 1}-${now.getFullYear()}`;
           const currentYear = now.getFullYear();
           const response = await axios.post(
             URLS.baseURL +
@@ -85,20 +86,6 @@ const OutletSurveyPage = () => {
             },
             { headers: { Authorization: user } },
           );
-          // const settings = {
-          //   method: "GET",
-          //   headers: {
-          //     "Content-Type": "application/json",
-          //     Authorization: user,
-          //   },
-          // };
-
-          // const response = await fetch(
-          //   URLS.baseURL +
-          //     `/api/outlet-survey/get-phases-with-outlets-surveys?outletCodes=${outletCodes}`,
-          //   settings,
-          // );
-          // const data = await response.json();
           if (response?.status === 200) {
             setPhase(response?.data?.data);
           } else {
@@ -113,6 +100,17 @@ const OutletSurveyPage = () => {
     };
     getPhases();
   }, [user, outlets]);
+
+  useLayoutEffect(() => {
+    if (!selectedPhase?.outlets?.length || !outletDetails) return;
+
+    const outletStatus =
+      selectedPhase?.outlets?.find(
+        (outletSurvey) => outletSurvey?._id === outletDetails?.code,
+      ) || {};
+    setOutletStatus(outletStatus);
+  }, [selectedPhase, outletDetails]);
+
   return (
     <main>
       <section className="py-4">
@@ -286,15 +284,23 @@ const OutletSurveyPage = () => {
                         </p>
                         <div className="w-1 self-stretch bg-border" />
                         <p className="text-sm font-medium">
-                          {phase?.isComplete ? (
-                            <span className="text-green-500">
-                              Complete All Outlet
-                            </span>
-                          ) : (
-                            <span>Not Complete Yet</span>
-                          )}
+                          Incomplete :{" "}
+                          <span className="font-bold">
+                            {outlets?.length - (phase?.completed_outlets || 0)}
+                          </span>
                         </p>
                       </div>
+                      <p className="mt-2 text-sm font-medium">
+                        {phase?.isComplete ? (
+                          <span className="text-green-500">
+                            Complete All Outlet
+                          </span>
+                        ) : (
+                          <span className="text-red-500">
+                            {phase?.name} Survey Not Complete Yet
+                          </span>
+                        )}
+                      </p>
                     </div>
                   );
                 })}
@@ -353,18 +359,30 @@ const OutletSurveyPage = () => {
                   {selectedPhase?.questions?.length || 0}
                 </span>
               </p>
-              <div className="flex items-center gap-2">
-                <p className="mt-2 text-sm font-medium">
+              <div className="mt-2 flex items-center gap-2">
+                <p className="text-sm font-medium">
                   Total Outlet:{" "}
                   <span className="font-bold">{outlets?.length || 0}</span>
                 </p>
-                <p className="mt-2 text-sm font-medium">
+                <div className="w-1 self-stretch bg-border" />
+                <p className="text-sm font-medium">
                   Completed:{" "}
                   <span className="font-bold">
                     {selectedPhase?.completed_outlets || 0}
                   </span>
                 </p>
               </div>
+              <p className="mt-2 text-sm font-medium">
+                {outletStatus?._id ? (
+                  <span className="font-bold text-green-500">
+                    {outletDetails?.name} Is Complete
+                  </span>
+                ) : (
+                  <span className="font-bold text-red-500">
+                    {outletDetails?.name} Survey Not Complete Yet
+                  </span>
+                )}
+              </p>
             </div>
           )}
           <div className="text-right">
@@ -372,6 +390,7 @@ const OutletSurveyPage = () => {
               onClick={() =>
                 navigate(`/outlet-survey-questions`, {
                   state: {
+                    totalOutlets: outlets?.length,
                     outlet: outletDetails,
                     outletId: outletDetails?._id,
                     outletCode: outletDetails?.code,
@@ -382,7 +401,12 @@ const OutletSurveyPage = () => {
                   },
                 })
               }
-              disabled={!outletDetails?._id || !selectedPhase?._id || isLoading}
+              disabled={
+                !outletDetails?._id ||
+                !selectedPhase?._id ||
+                !!outletStatus?._id ||
+                isLoading
+              }
             >
               <span>{isEnglish ? "Outlet Survey" : "আউটলেট সার্ভে"}</span>
             </Button>

@@ -183,7 +183,7 @@ const OutletSurveyQuestionsPage = () => {
   const [successModal, setSuccessModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { outlet, phase } = state || {};
+  const { totalOutlets, outlet, phase } = state || {};
   const phaseId = phase?._id;
   const outletId = outlet?._id;
   const outletCode = outlet?.code;
@@ -385,12 +385,48 @@ const OutletSurveyQuestionsPage = () => {
           {successModal && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
               <div className="rounded-lg bg-white p-8 text-center">
-                <Check className="mx-auto mb-4 text-green-500" size={40} />
-                <h2 className="mb-2 text-xl font-bold">
-                  {isEnglish
-                    ? "Submission Successful!"
-                    : "সফলভাবে জমা দেওয়া হয়েছে!"}
-                </h2>
+                <div className="mb-4">
+                  <Check className="mx-auto mb-4 text-green-500" size={40} />
+                  <h2 className="mb-2 text-xl font-bold">
+                    {isEnglish
+                      ? "Submission Successful!"
+                      : "সফলভাবে জমা দেওয়া হয়েছে!"}
+                  </h2>
+                  <p className="">
+                    <p>Last Submission Date: </p>
+                    <span className="font-bold">
+                      {new Date(phase?.end_date).toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <p className="text-sm font-medium">
+                      Total Outlet:{" "}
+                      <span className="font-bold">
+                        {Number(totalOutlets || 0) || 0}
+                      </span>
+                    </p>
+                    <div className="w-1 self-stretch bg-border" />
+                    <p className="text-sm font-medium">
+                      Completed:{" "}
+                      <span className="font-bold">
+                        {phase?.completed_outlets + 1 || 0}
+                      </span>
+                    </p>
+                    <div className="w-1 self-stretch bg-border" />
+                    <p className="text-sm font-medium">
+                      Incomplete:{" "}
+                      <span className="font-bold">
+                        {Number(totalOutlets || 0) -
+                          (phase?.completed_outlets + 1 || 0)}
+                      </span>
+                    </p>
+                  </div>
+                </div>
                 <Button onClick={() => navigate(-1)}>
                   {isEnglish ? "Return to Dashboard" : "ড্যাশবোর্ডে ফিরে যান"}
                 </Button>
