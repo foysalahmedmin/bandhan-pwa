@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { FormControl } from "@/components/ui/FormControl";
 import { Radio } from "@/components/ui/Radio";
 import URLS from "@/constants/urls";
+import useAuthenticationState from "@/hooks/state/useAuthenticationState";
 import useLanguageState from "@/hooks/state/useLanguageState";
 import { getRandomNumber } from "@/utils/getRandomNumber";
 import axios from "axios";
@@ -24,6 +25,9 @@ const CallUpdatePage = () => {
 
   const { outletCode, outletName, communication, salesPoint } =
     routeLocation?.state || {};
+
+  const { user, userInfo } = useAuthenticationState();
+  console.log(user);
 
   const { isEnglish } = useLanguageState();
   const [successModal, setSuccessModal] = useState(false);
@@ -233,7 +237,12 @@ const CallUpdatePage = () => {
         lon: showLocation ? location?.longitude : 0,
       };
 
-      const response = await axios.post(url, payload);
+      const response = await axios.post(url, payload, {
+        headers: {
+          Authorization: user,
+          "Custom-Key": "some-value",
+        },
+      });
       if (response.status === 200) {
         setSuccessModal(true);
       }
