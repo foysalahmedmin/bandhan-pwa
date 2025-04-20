@@ -1,4 +1,3 @@
-import CameraModal from "@/components/partials/Modals/CameraModal";
 import RootLoading from "@/components/partials/RootLoading.jsx";
 import { Button } from "@/components/ui/Button";
 import { FormControl } from "@/components/ui/FormControl";
@@ -11,10 +10,11 @@ import {
 import URLS from "@/constants/urls";
 import useAuthenticationState from "@/hooks/state/useAuthenticationState";
 import useLanguageState from "@/hooks/state/useLanguageState";
+import { imageMarker } from "@/utils/imageMarker";
 import axios from "axios";
 import { Camera, FileSignature as Signature, X } from "lucide-react";
 import moment from "moment";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import SignaturePad from "react-signature-canvas";
 
@@ -32,8 +32,6 @@ export default function DistributionIncentivePage() {
   const [signature1, setSignature1] = useState(null);
   const [signature2, setSignature2] = useState(null);
 
-  const [showCameraModal1, setShowCameraModal1] = useState(false);
-  const [showCameraModal2, setShowCameraModal2] = useState(false);
   const [showSignatureModal1, setShowSignatureModal1] = useState(false);
   const [showSignatureModal2, setShowSignatureModal2] = useState(false);
   const [verifyOtpModal, setVerifyOtpModal] = useState(false);
@@ -198,14 +196,12 @@ export default function DistributionIncentivePage() {
                     label={isEnglish ? "Proof Photo 1" : "প্রমাণ ছবি ১"}
                     image={image1}
                     setImage={setImage1}
-                    onOpen={() => setShowCameraModal1(true)}
                     buttonText={isEnglish ? "Take Photo" : "ছবি তুলুন"}
                   />
                   <ImageUpload
                     label={isEnglish ? "Proof Photo 2" : "প্রমাণ ছবি ২"}
                     image={image2}
                     setImage={setImage2}
-                    onOpen={() => setShowCameraModal2(true)}
                     buttonText={isEnglish ? "Take Photo" : "ছবি তুলুন"}
                   />
                 </div>
@@ -235,21 +231,6 @@ export default function DistributionIncentivePage() {
               </div>
             )}
           </div>
-
-          {/* Signature Modals */}
-          <CameraModal
-            isOpen={showCameraModal1}
-            setIsOpen={setShowCameraModal1}
-            setImage={setImage1}
-            title={isEnglish ? "Proof Photo 1" : "প্রমাণ ছবি ১"}
-          />
-
-          <CameraModal
-            isOpen={showCameraModal2}
-            setIsOpen={setShowCameraModal2}
-            setImage={setImage2}
-            title={isEnglish ? "Proof Photo 1" : "প্রমাণ ছবি ১"}
-          />
 
           {/* Signature Modals */}
           <SignatureModal
@@ -327,12 +308,60 @@ function InfoField({ label, value }) {
   );
 }
 
-function ImageUpload({ label, image, setImage, onOpen, buttonText }) {
+function ImageUpload({ label, image, setImage, buttonText }) {
+  const location = useLocation();
+  const { outletCode } = location?.state || {};
+  const { userInfo } = useAuthenticationState();
+
+  const handleTakePhoto = useCallback(
+    (setImage) => {
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = "image/*";
+      fileInput.capture = "environment";
+
+      fileInput.onchange = async (e) => {
+        const target = e.target;
+        const file = target.files?.[0];
+
+        if (!file) return;
+
+        const url = URL.createObjectURL(file);
+
+        try {
+          const texts = [
+            `TMS: ${userInfo.name}`,
+            `Outlet Code: ${outletCode}`,
+            `Territory: ${userInfo?.territory[0]?.name}`,
+            `Latitude: ${location?.latitude} Longitude: ${location?.longitude}`,
+            `Date: ${new Date().toISOString().replace("T", " ").split(".")[0]}`,
+          ];
+          const image = await imageMarker({
+            url,
+            texts: texts,
+            options: {},
+          });
+
+          if (image) {
+            setImage(image);
+          }
+        } catch (error) {
+          console.error("Error processing image:", error);
+        } finally {
+          URL.revokeObjectURL(url);
+        }
+      };
+
+      fileInput.click();
+    },
+    [outletCode, location, userInfo],
+  );
+
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium">{label}</label>
       <button
-        onClick={onOpen}
+        onClick={() => handleTakePhoto(setImage)}
         className="relative flex aspect-square w-full flex-col items-center justify-center rounded-md border-2 border-dashed border-primary/50 bg-primary/25 hover:bg-primary/10"
       >
         {image ? (
