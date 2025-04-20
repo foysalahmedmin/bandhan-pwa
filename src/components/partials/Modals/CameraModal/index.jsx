@@ -6,7 +6,7 @@ import {
   ModalContent,
 } from "@/components/ui/Modal";
 import useCamera from "@/hooks/utils/useCamera";
-import { Camera } from "lucide-react";
+import { Camera, Repeat } from "lucide-react";
 import { useEffect } from "react";
 
 function CameraModal({
@@ -25,6 +25,8 @@ function CameraModal({
     capturePhoto,
     startCamera,
     stopCamera,
+    switchCamera,
+    cameraType,
   } = useCamera();
 
   const handleCapture = () => {
@@ -39,6 +41,7 @@ function CameraModal({
     } else {
       stopCamera();
     }
+
     if (capturedPhoto) {
       setImage(capturedPhoto);
     }
@@ -49,8 +52,8 @@ function CameraModal({
       <Modal isOpen={isOpen} setIsOpen={setIsOpen}>
         <ModalBackdrop />
         <ModalContent className="border-none bg-transparent px-container-inset">
-          <div className="rounded-md bg-card px-4 py-6">
-            <div className="space-y-4">
+          <div className="rounded-md bg-card">
+            <div className="flex h-[80vh] flex-col space-y-4 px-4 py-6">
               <div className="flex items-center gap-4">
                 <span className="block flex-1 font-semibold text-primary">
                   {title}
@@ -61,18 +64,34 @@ function CameraModal({
                   size="sm"
                 />
               </div>
-              <div className="grid h-96 place-items-center rounded-md border">
+
+              <div className="relative grid grow place-items-center overflow-hidden rounded-md border">
                 <video
                   ref={videoRef}
-                  style={{ width: "100%", maxHeight: "100%" }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    maxWidth: "100%",
+                    maxHeight: "100%",
+                  }}
                 />
-              </div>
-              <div className="flex justify-center gap-2">
                 <Button
-                  shape="icon"
-                  onClick={handleCapture}
-                  disabled={!isCameraOn}
+                  onClick={switchCamera}
+                  // disabled={!isCameraOn}
+                  className="absolute bottom-2 right-2 flex items-center gap-2 rounded bg-background/70 px-2 py-1 text-xs text-muted-foreground"
+                  variant="none"
                 >
+                  <span>
+                    {cameraType === "user" ? "Front Camera" : "Back Camera"}
+                  </span>
+                  <span>
+                    <Repeat className="size-4" />
+                  </span>
+                </Button>
+              </div>
+
+              <div className="flex justify-center gap-2">
+                <Button onClick={handleCapture} disabled={!isCameraOn}>
                   <Camera className="size-6" />
                 </Button>
               </div>
