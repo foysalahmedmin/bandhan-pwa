@@ -16,18 +16,16 @@ import useLanguageState from "@/hooks/state/useLanguageState";
 import { getRandomNumber } from "@/utils/getRandomNumber";
 import axios from "axios";
 import { Camera, Check, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const CallUpdatePage = () => {
   const routeLocation = useLocation();
   const navigate = useNavigate();
 
-  const { outletCode, outletName, communication, salesPoint } =
-    routeLocation?.state || {};
+  const { outletCode, outletName, salesPoint } = routeLocation?.state || {};
 
-  const { user, userInfo } = useAuthenticationState();
-  console.log(user);
+  const { user } = useAuthenticationState();
 
   const { isEnglish } = useLanguageState();
   const [successModal, setSuccessModal] = useState(false);
@@ -92,45 +90,45 @@ const CallUpdatePage = () => {
     getImages();
   }, []);
 
-  const updatePomsCount = (itemName, newCount) => {
+  const updatePomsCount = useCallback((itemName, value) => {
     setPosmInput((prevState) => ({
       ...prevState,
       [itemName]: {
         ...prevState[itemName],
-        count: newCount,
+        count: value,
       },
     }));
-  };
+  }, []);
 
-  const updatePomsPhotos = (itemName, newCount) => {
+  const updatePomsPhotos = useCallback((itemName, value) => {
     setPosmInput((prevState) => ({
       ...prevState,
       [itemName]: {
         ...prevState[itemName],
-        img: newCount,
+        img: value,
       },
     }));
-  };
+  }, []);
 
-  const updatePomsBool = (itemName, newCount) => {
+  const updatePomsBool = useCallback((itemName, value) => {
     setPomsBool((prevState) => ({
       ...prevState,
       [itemName]: {
         ...prevState[itemName],
-        value: newCount,
+        value: value,
       },
     }));
-  };
+  }, []);
 
-  const updatePomsBoolPhotos = (itemName, newCount) => {
+  const updatePomsBoolPhotos = useCallback((itemName, value) => {
     setPomsBool((prevState) => ({
       ...prevState,
       [itemName]: {
         ...prevState[itemName],
-        img: newCount,
+        img: value,
       },
     }));
-  };
+  }, []);
 
   const handleShowLocation = async () => {
     try {

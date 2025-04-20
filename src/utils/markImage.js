@@ -27,11 +27,11 @@ export const markImage = async ({
 
     // Add watermark text
     ctx.font = "15px Arial";
-    ctx.fillStyle = "rgba(255, 255, 255, 0.7)"; // White text with transparency
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
-    const textLines = [
+    const texts = [
       `TMS: ${userInfo.name}`,
       `Outlet Code: ${outletCode}`,
       `Outlet Name: ${outletName}`,
@@ -40,9 +40,9 @@ export const markImage = async ({
       `Date: ${new Date().toISOString().replace("T", " ").split(".")[0]}`,
     ];
 
-    const lineHeight = 20; // Spacing between lines
-    const startY = canvas.height - (textLines.length * lineHeight + 10); // Start 10px above bottom
-    textLines.forEach((line, index) => {
+    const lineHeight = 20;
+    const startY = canvas.height - (texts.length * lineHeight + 10);
+    texts.forEach((line, index) => {
       ctx.fillText(line, canvas.width / 2, startY + index * lineHeight);
     });
 

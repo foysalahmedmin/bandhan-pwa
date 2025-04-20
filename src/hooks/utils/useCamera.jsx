@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const useCamera = () => {
   const videoRef = useRef(null);
@@ -6,56 +6,92 @@ const useCamera = () => {
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [cameraType, setCameraType] = useState("user");
+  const [availableCameras, setAvailableCameras] = useState([]);
+  const [error, setError] = useState(null);
   const streamRef = useRef(null);
 
-  const startCamera = useCallback(async (type = "user") => {
-    try {
-      // Stop any existing stream
+  useEffect(() => {
+    return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
+    };
+  }, []);
 
-      const constraints = {
-        video: {
-          facingMode: type,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-        setIsCameraOn(true);
-        setCameraType(type);
-      }
-    } catch (error) {
-      console.error("Error accessing the camera:", error);
-
-      // Fallback to basic constraints if specific facingMode fails
-      if (error.name === "OverconstrainedError") {
-        console.log("Trying with basic constraints...");
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-          });
-          streamRef.current = stream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.play();
-            setIsCameraOn(true);
-            // We don't know which camera we got, so set to user as default
-            setCameraType("user");
-          }
-        } catch (fallbackError) {
-          console.error("Fallback camera access failed:", fallbackError);
-        }
-      }
+  const updateAvailableCameras = useCallback(async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const cameras = devices.filter((device) => device.kind === "videoinput");
+      setAvailableCameras(cameras);
+    } catch (err) {
+      setError(err);
     }
   }, []);
+
+  useEffect(() => {
+    navigator.mediaDevices.addEventListener(
+      "devicechange",
+      updateAvailableCameras,
+    );
+    return () => {
+      navigator.mediaDevices.removeEventListener(
+        "devicechange",
+        updateAvailableCameras,
+      );
+    };
+  }, [updateAvailableCameras]);
+
+  const startCamera = useCallback(
+    async (type = "user") => {
+      try {
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => track.stop());
+        }
+
+        const constraints = {
+          video: {
+            facingMode: type,
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        streamRef.current = stream;
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+          setIsCameraOn(true);
+          setCameraType(type);
+          await updateAvailableCameras();
+        }
+      } catch (error) {
+        setError(error);
+        console.error("Error accessing camera:", error);
+
+        if (error.name === "OverconstrainedError") {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+            });
+            streamRef.current = stream;
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+              await videoRef.current.play();
+              setIsCameraOn(true);
+              setCameraType("user");
+              await updateAvailableCameras();
+            }
+          } catch (fallbackError) {
+            setError(fallbackError);
+            console.error("Fallback camera access failed:", fallbackError);
+          }
+        }
+      }
+    },
+    [updateAvailableCameras],
+  );
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -70,57 +106,99 @@ const useCamera = () => {
 
   const switchCamera = useCallback(() => {
     if (!isCameraOn) return;
-    const newCameraType = cameraType === "user" ? "environment" : "user";
-    startCamera(newCameraType);
+    const newType = cameraType === "user" ? "environment" : "user";
+    startCamera(newType);
   }, [isCameraOn, cameraType, startCamera]);
 
-  const capturePhoto = useCallback(() => {
-    if (!videoRef.current) return;
-
-    // Use the existing canvasRef if available, otherwise create a temporary one
-    const canvas = canvasRef.current || document.createElement("canvas");
+  const capturePhoto = useCallback((texts = [], options = {}) => {
     const video = videoRef.current;
+    if (!video || !canvasRef.current) return;
 
+    const canvas = canvasRef.current;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    const context = canvas.getContext("2d");
-    if (!context) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    const photo = canvas.toDataURL("image/png");
-    setCapturedPhoto(photo);
+    if (texts.length > 0) {
+      const {
+        font = "16px Arial",
+        color = "white",
+        outlineColor = "black",
+        outlineWidth = 2,
+        backgroundColor = "rgba(0, 0, 0, 0.7)",
+        padding = 10,
+        lineHeight = 20,
+        textAlign = "center",
+        textBaseline = "middle",
+      } = options;
 
-    // If we created a temporary canvas, clean it up
-    if (!canvasRef.current) {
-      canvas.remove();
+      ctx.font = font;
+      ctx.textAlign = textAlign;
+      ctx.textBaseline = textBaseline;
+
+      const textBlockHeight = texts.length * lineHeight + padding * 2;
+      const textYStart = canvas.height - textBlockHeight - padding;
+
+      const textMetrics = texts.map((text) => ctx.measureText(text));
+      const maxWidth = Math.max(...textMetrics.map((m) => m.width));
+      const bgWidth = maxWidth + padding * 2;
+      const bgX =
+        {
+          left: padding,
+          center: (canvas.width - bgWidth) / 2,
+          right: canvas.width - bgWidth - padding,
+        }[textAlign] || padding;
+
+      if (backgroundColor) {
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(bgX, textYStart, bgWidth, textBlockHeight);
+      }
+
+      texts.forEach((text, index) => {
+        const yPosition =
+          textYStart + padding + index * lineHeight + lineHeight / 2;
+        const xPosition =
+          {
+            left: padding,
+            center: canvas.width / 2,
+            right: canvas.width - padding,
+          }[textAlign] || padding;
+
+        if (outlineWidth > 0) {
+          ctx.strokeStyle = outlineColor;
+          ctx.lineWidth = outlineWidth;
+          ctx.strokeText(text, xPosition, yPosition);
+        }
+
+        ctx.fillStyle = color;
+        ctx.fillText(text, xPosition, yPosition);
+      });
     }
-  }, []);
 
-  const getAvailableCameras = useCallback(async () => {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      return devices.filter((device) => device.kind === "videoinput");
-    } catch (error) {
-      console.error("Error enumerating devices:", error);
-      return [];
-    }
+    setCapturedPhoto(canvas.toDataURL("image/png"));
   }, []);
 
   return {
     videoRef,
     canvasRef,
     isCameraOn,
-    capturedPhoto,
-    cameraType,
     setIsCameraOn,
+    capturedPhoto,
     setCapturedPhoto,
+    cameraType,
+    setCameraType,
+    availableCameras,
+    setAvailableCameras,
+    error,
+    setError,
     startCamera,
     stopCamera,
     switchCamera,
     capturePhoto,
-    getAvailableCameras,
   };
 };
 

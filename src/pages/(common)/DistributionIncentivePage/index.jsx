@@ -63,24 +63,6 @@ export default function DistributionIncentivePage() {
     getDistributionData();
   }, [outletCode]);
 
-  const handleCameraCapture = (setImage) => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.capture = "environment";
-    input.onchange = (e) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          setImage(reader.result);
-        };
-        reader.readAsDataURL(file);
-      }
-    };
-    input.click();
-  };
-
   const handleVerifyRetailer = async () => {
     if (!image1 || !image2 || !signature1 || !signature2) {
       alert(isEnglish ? "Please fill all fields" : "সব ক্ষেত্র পূরণ করুন");

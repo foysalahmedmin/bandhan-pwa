@@ -1,10 +1,10 @@
+import CameraModal from "@/components/partials/Modals/CameraModal";
 import { useLocation } from "@/components/providers/LocationProvider";
 import { Button } from "@/components/ui/Button";
 import { Radio } from "@/components/ui/Radio";
 import URLS from "@/constants/urls";
 import useAuthenticationState from "@/hooks/state/useAuthenticationState";
 import useLanguageState from "@/hooks/state/useLanguageState";
-import { markImage } from "@/utils/markImage";
 import { useCallback, useState } from "react";
 
 const PomsBoolInputItem = ({
@@ -22,39 +22,18 @@ const PomsBoolInputItem = ({
 
   const [inputValue, setInputValue] = useState(null);
   const [image, setImage] = useState("");
+  const [showCameraModal, setShowCameraModal] = useState(false);
 
   const [visibleImage, setVisibleImage] = useState("");
   const [visible, setVisible] = useState(false);
 
-  const handleSelectPhoto = useCallback(() => {
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "image/*";
-    fileInput.onchange = async (e) => {
-      const file = e.target?.files[0];
-      if (file) {
-        const uri = URL.createObjectURL(file);
-        const response = await markImage({
-          uri,
-          name: file?.name,
-          outletCode,
-          outletName,
-          location,
-          userInfo,
-        });
-        setImage(response);
-        updatePomsBoolPhotos(item?.key, response);
-      }
-    };
-    fileInput.click();
-  }, [
-    item.key,
-    updatePomsBoolPhotos,
-    outletCode,
-    outletName,
-    location,
-    userInfo,
-  ]);
+  const handleSetImage = useCallback(
+    (image) => {
+      setImage(image);
+      updatePomsBoolPhotos(item.key, image);
+    },
+    [item.key, updatePomsBoolPhotos],
+  );
 
   const imageURL = URLS.baseMediaURL + imagePath;
 
@@ -128,13 +107,27 @@ const PomsBoolInputItem = ({
           <Button
             type="button"
             size="sm"
-            onClick={handleSelectPhoto}
+            onClick={() => setShowCameraModal(true)}
             className="w-full text-xs"
           >
             Select Photo
           </Button>
         )}
       </div>
+      <CameraModal
+        isOpen={showCameraModal}
+        setIsOpen={setShowCameraModal}
+        setImage={handleSetImage}
+        title={isEnglish ? "Proof Photo" : "প্রমাণ ছবি"}
+        texts={[
+          `TMS: ${userInfo?.name}`,
+          `Outlet Code: ${outletCode}`,
+          `Outlet Name: ${outletName}`,
+          `Territory: ${userInfo?.territory[0]?.name}`,
+          `Latitude: ${location?.latitude} Longitude: ${location?.longitude}`,
+          `Date: ${new Date().toISOString().replace("T", " ").split(".")[0]}`,
+        ]}
+      />
       {/* Modals */}
       {visible && (
         <div

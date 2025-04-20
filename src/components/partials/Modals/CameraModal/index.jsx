@@ -9,7 +9,14 @@ import useCamera from "@/hooks/utils/useCamera";
 import { Camera } from "lucide-react";
 import { useEffect } from "react";
 
-function CameraModal({ isOpen, setIsOpen, setImage, title }) {
+function CameraModal({
+  isOpen,
+  setIsOpen,
+  setImage,
+  title,
+  texts = [],
+  options = {},
+}) {
   const {
     canvasRef,
     videoRef,
@@ -21,7 +28,7 @@ function CameraModal({ isOpen, setIsOpen, setImage, title }) {
   } = useCamera();
 
   const handleCapture = () => {
-    capturePhoto();
+    capturePhoto(texts, options);
     stopCamera();
     setIsOpen(false);
   };

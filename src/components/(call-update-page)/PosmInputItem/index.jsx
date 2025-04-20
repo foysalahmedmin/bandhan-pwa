@@ -5,7 +5,7 @@ import { FormControl } from "@/components/ui/FormControl";
 import URLS from "@/constants/urls";
 import useAuthenticationState from "@/hooks/state/useAuthenticationState";
 import useLanguageState from "@/hooks/state/useLanguageState";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 const PosmInputItem = ({
   item,
@@ -20,8 +20,6 @@ const PosmInputItem = ({
   const { userInfo } = useAuthenticationState();
   const { location } = useLocation();
 
-  const [isLoading, setIsLoading] = useState(false);
-
   const [inputValue, setInputValue] = useState(null);
   const [image, setImage] = useState("");
   const [showCameraModal, setShowCameraModal] = useState(false);
@@ -29,28 +27,13 @@ const PosmInputItem = ({
   const [visibleImage, setVisibleImage] = useState("");
   const [visible, setVisible] = useState(false);
 
-  // const handleSelectPhoto = useCallback(() => {
-  //   const fileInput = document.createElement("input");
-  //   fileInput.type = "file";
-  //   fileInput.accept = "image/*";
-  //   fileInput.onchange = async (e) => {
-  //     const file = e.target?.files[0];
-  //     if (file) {
-  //       const uri = URL.createObjectURL(file);
-  //       const response = await markImage({
-  //         uri,
-  //         name: file?.name,
-  //         outletCode,
-  //         outletName,
-  //         location,
-  //         userInfo,
-  //       });
-  //       setImage(response);
-  //       updatePomsPhotos(item.key, response);
-  //     }
-  //   };
-  //   fileInput.click();
-  // }, [item.key, updatePomsPhotos, outletCode, outletName, location, userInfo]);
+  const handleSetImage = useCallback(
+    (image) => {
+      setImage(image);
+      updatePomsPhotos(item.key, image);
+    },
+    [item.key, updatePomsPhotos],
+  );
 
   const imageURL = URLS.baseMediaURL + imagePath;
 
@@ -120,8 +103,16 @@ const PosmInputItem = ({
       <CameraModal
         isOpen={showCameraModal}
         setIsOpen={setShowCameraModal}
-        setImage={setImage}
+        setImage={handleSetImage}
         title={isEnglish ? "Proof Photo" : "প্রমাণ ছবি"}
+        texts={[
+          `TMS: ${userInfo?.name}`,
+          `Outlet Code: ${outletCode}`,
+          `Outlet Name: ${outletName}`,
+          `Territory: ${userInfo?.territory[0]?.name}`,
+          `Latitude: ${location?.latitude} Longitude: ${location?.longitude}`,
+          `Date: ${new Date().toISOString().replace("T", " ").split(".")[0]}`,
+        ]}
       />
       {/* Modals */}
       {visible && (
