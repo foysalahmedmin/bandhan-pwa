@@ -110,7 +110,7 @@ const PomsBoolInputItem = ({
             onClick={() => setShowCameraModal(true)}
             className="w-full text-xs"
           >
-            Select Photo
+            Take Photo
           </Button>
         )}
       </div>

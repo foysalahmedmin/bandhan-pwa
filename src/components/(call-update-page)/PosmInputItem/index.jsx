@@ -93,10 +93,9 @@ const PosmInputItem = ({
             type="button"
             size="sm"
             onClick={() => setShowCameraModal(true)}
-            // onClick={handleSelectPhoto}
             className="w-full text-xs"
           >
-            Select Photo
+            Take Photo
           </Button>
         )}
       </div>

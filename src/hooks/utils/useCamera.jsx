@@ -203,3 +203,11 @@ const useCamera = () => {
 };
 
 export default useCamera;
+
+{
+  /* <input
+  type="file"
+  accept="image/*"
+  capture="environment"
+/> */
+}
