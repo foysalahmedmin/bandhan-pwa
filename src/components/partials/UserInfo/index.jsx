@@ -56,7 +56,7 @@ const UserInfo = () => {
         </DrawerContent>
       </Drawer>
       <Button
-        className="group absolute left-0 top-1/2 -translate-y-1/2 rounded-l-none rounded-r-full active:scale-100"
+        className="group absolute left-0 top-[calc(50%-1.25rem)] z-10 h-10 rounded-l-none rounded-r-full active:scale-100"
         shape="icon"
         onClick={() => setIsOpen(true)}
       >
