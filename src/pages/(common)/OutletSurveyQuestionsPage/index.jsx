@@ -81,7 +81,7 @@ const Question = ({
           typeof question?.min_value === "number" &&
           processedValue < question.min_value
         ) {
-          processedValue = question.min_value;
+          processedValue = "";
         }
         if (
           typeof question?.max_value === "number" &&
@@ -144,7 +144,7 @@ const Question = ({
       typeof question.min_value === "number" &&
       numericValue < question.min_value
     ) {
-      constrainedValue = question.min_value;
+      constrainedValue = "";
     }
 
     if (
@@ -201,6 +201,7 @@ const Question = ({
             as="textarea"
             type="text"
             rows={4}
+            className="h-[5rem] resize-y items-start py-1"
             value={question.value || ""}
             onChange={(e) => handleValueChange(e.target.value)}
             required={isRequired}
@@ -211,36 +212,7 @@ const Question = ({
           <FormControl
             type="number"
             value={question.value || ""}
-            onChange={(e) => {
-              const inputValue = e.target.value;
-
-              if (inputValue === "") {
-                handleValueChange("");
-                return;
-              }
-              const numericValue = Number(inputValue);
-
-              if (isNaN(numericValue)) {
-                return;
-              }
-              let constrainedValue = numericValue;
-
-              if (
-                typeof question.min_value === "number" &&
-                numericValue < question.min_value
-              ) {
-                constrainedValue = question.min_value;
-              }
-
-              if (
-                typeof question.max_value === "number" &&
-                numericValue > question.max_value
-              ) {
-                constrainedValue = question.max_value;
-              }
-
-              handleValueChange(constrainedValue);
-            }}
+            onChange={(e) => handleValueChange(Number(e.target.value))}
             onInput={(e) => {
               const inputValue = e.target.value;
               const numericValue = Number(inputValue);
@@ -256,7 +228,7 @@ const Question = ({
                 typeof question.min_value === "number" &&
                 numericValue < question.min_value
               ) {
-                e.target.value = question.min_value;
+                e.target.value = "";
               }
             }}
             {...(question.min_value && { min: question.min_value })}
@@ -273,21 +245,7 @@ const Question = ({
                 value={
                   Array.isArray(question.value) ? question.value[0] || "" : ""
                 }
-                onChange={(e) => {
-                  const inputValue = e.target.value;
-
-                  if (inputValue === "") {
-                    handleNumberRangeChange("", true);
-                    return;
-                  }
-                  const numericValue = Number(inputValue);
-
-                  if (isNaN(numericValue)) {
-                    return;
-                  }
-
-                  handleNumberRangeChange(numericValue, true);
-                }}
+                onChange={(e) => handleNumberRangeChange(e.target.value, true)}
                 onInput={(e) => {
                   const inputValue = e.target.value;
                   const numericValue = Number(inputValue);
@@ -303,7 +261,7 @@ const Question = ({
                     typeof question.min_value === "number" &&
                     numericValue < question.min_value
                   ) {
-                    e.target.value = question.min_value;
+                    e.target.value = "";
                   }
                 }}
                 {...(question.min_value && { min: question.min_value })}
@@ -317,21 +275,7 @@ const Question = ({
                 value={
                   Array.isArray(question.value) ? question.value[1] || "" : ""
                 }
-                onChange={(e) => {
-                  const inputValue = e.target.value;
-
-                  if (inputValue === "") {
-                    handleNumberRangeChange("", false);
-                    return;
-                  }
-                  const numericValue = Number(inputValue);
-
-                  if (isNaN(numericValue)) {
-                    return;
-                  }
-
-                  handleNumberRangeChange(numericValue, false);
-                }}
+                onChange={(e) => handleNumberRangeChange(e.target.value, false)}
                 onInput={(e) => {
                   const inputValue = e.target.value;
                   const numericValue = Number(inputValue);
@@ -347,7 +291,7 @@ const Question = ({
                     typeof question.min_value === "number" &&
                     numericValue < question.min_value
                   ) {
-                    e.target.value = question.min_value;
+                    e.target.value = "";
                   }
                 }}
                 {...(question.min_value && { min: question.min_value })}
@@ -645,7 +589,7 @@ const OutletSurveyQuestionsPage = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form className="mt-6" onSubmit={handleSubmit}>
             <div className="border p-2">
               {questions.map((question, index) => (
                 <Question
