@@ -50,15 +50,61 @@ const Question = ({
       return path.split(".").reduce((obj, key) => obj?.[key], data) ?? "";
     },
   );
+
   const handleValueChange = (value) => {
     let processedValue = value;
 
     switch (question.input_type) {
+      case "text":
+      case "textarea":
+        if (question.isTextOnly) {
+          processedValue = processedValue.replace(/[^a-zA-Z ]/g, "");
+        }
+        if (!question.isTextOnly && !question.isAllowSpecialCharacter) {
+          processedValue = processedValue.replace(/[^a-zA-Z0-9 ]/g, "");
+        }
+        if (typeof question?.max_length === "number") {
+          processedValue = processedValue.slice(0, question.max_length);
+        }
+        break;
       case "number":
+        // Handle empty string case
+        if (value === "" || value === null || value === undefined) {
+          processedValue = "";
+          break;
+        }
+
         processedValue = Number(value);
+
+        // Apply constraints
+        if (
+          typeof question?.min_value === "number" &&
+          processedValue < question.min_value
+        ) {
+          processedValue = question.min_value;
+        }
+        if (
+          typeof question?.max_value === "number" &&
+          processedValue > question.max_value
+        ) {
+          processedValue = question.max_value;
+        }
+        break;
+      case "number-range":
+        if (Array.isArray(value)) {
+          processedValue = [Number(value[0]), Number(value[1])];
+        }
         break;
       case "date":
         processedValue = new Date(value).toISOString();
+        break;
+      case "date-range":
+        if (Array.isArray(value)) {
+          processedValue = [
+            new Date(value[0]).toISOString(),
+            new Date(value[1]).toISOString(),
+          ];
+        }
         break;
       case "checkbox":
         processedValue = Array.isArray(value) ? value : [value];
@@ -70,9 +116,59 @@ const Question = ({
     handleAddValue(processedValue, index);
   };
 
-  if (!isVisible) return null;
+  // Helper function for number-range input with validation
+  const handleNumberRangeChange = (value, isStart) => {
+    const currentValue = Array.isArray(question.value)
+      ? question.value
+      : [0, 0];
+    const newValue = [...currentValue];
 
-  console.log(question?.value);
+    // Handle empty string case
+    if (value === "" || value === null || value === undefined) {
+      newValue[isStart ? 0 : 1] = "";
+      handleValueChange(newValue);
+      return;
+    }
+
+    const numericValue = Number(value);
+
+    // Validate if it's a valid number
+    if (isNaN(numericValue)) {
+      return;
+    }
+
+    let constrainedValue = numericValue;
+
+    // Apply min/max constraints
+    if (
+      typeof question.min_value === "number" &&
+      numericValue < question.min_value
+    ) {
+      constrainedValue = question.min_value;
+    }
+
+    if (
+      typeof question.max_value === "number" &&
+      numericValue > question.max_value
+    ) {
+      constrainedValue = question.max_value;
+    }
+
+    newValue[isStart ? 0 : 1] = constrainedValue;
+    handleValueChange(newValue);
+  };
+
+  // Helper function for date-range input
+  const handleDateRangeChange = (value, isStart) => {
+    const currentValue = Array.isArray(question.value)
+      ? question.value
+      : ["", ""];
+    const newValue = [...currentValue];
+    newValue[isStart ? 0 : 1] = value;
+    handleValueChange(newValue);
+  };
+
+  if (!isVisible) return null;
 
   return (
     <div
@@ -91,14 +187,176 @@ const Question = ({
       </div>
 
       <div className="space-y-2">
-        {["text", "number"].includes(question.input_type) && (
+        {question.input_type === "text" && (
           <FormControl
-            type={question.input_type}
+            type="text"
             value={question.value || ""}
             onChange={(e) => handleValueChange(e.target.value)}
             required={isRequired}
             placeholder={isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"}
           />
+        )}
+        {question.input_type === "textarea" && (
+          <FormControl
+            as="textarea"
+            type="text"
+            rows={4}
+            value={question.value || ""}
+            onChange={(e) => handleValueChange(e.target.value)}
+            required={isRequired}
+            placeholder={isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"}
+          />
+        )}
+        {question.input_type === "number" && (
+          <FormControl
+            type="number"
+            value={question.value || ""}
+            onChange={(e) => {
+              const inputValue = e.target.value;
+
+              if (inputValue === "") {
+                handleValueChange("");
+                return;
+              }
+              const numericValue = Number(inputValue);
+
+              if (isNaN(numericValue)) {
+                return;
+              }
+              let constrainedValue = numericValue;
+
+              if (
+                typeof question.min_value === "number" &&
+                numericValue < question.min_value
+              ) {
+                constrainedValue = question.min_value;
+              }
+
+              if (
+                typeof question.max_value === "number" &&
+                numericValue > question.max_value
+              ) {
+                constrainedValue = question.max_value;
+              }
+
+              handleValueChange(constrainedValue);
+            }}
+            onInput={(e) => {
+              const inputValue = e.target.value;
+              const numericValue = Number(inputValue);
+
+              if (
+                typeof question.max_value === "number" &&
+                numericValue > question.max_value
+              ) {
+                e.target.value = question.max_value;
+              }
+
+              if (
+                typeof question.min_value === "number" &&
+                numericValue < question.min_value
+              ) {
+                e.target.value = question.min_value;
+              }
+            }}
+            {...(question.min_value && { min: question.min_value })}
+            {...(question.max_value && { max: question.max_value })}
+            required={isRequired}
+            placeholder={isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"}
+          />
+        )}
+        {question.input_type === "number-range" && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <FormControl
+                type="number"
+                value={
+                  Array.isArray(question.value) ? question.value[0] || "" : ""
+                }
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+
+                  if (inputValue === "") {
+                    handleNumberRangeChange("", true);
+                    return;
+                  }
+                  const numericValue = Number(inputValue);
+
+                  if (isNaN(numericValue)) {
+                    return;
+                  }
+
+                  handleNumberRangeChange(numericValue, true);
+                }}
+                onInput={(e) => {
+                  const inputValue = e.target.value;
+                  const numericValue = Number(inputValue);
+
+                  if (
+                    typeof question.max_value === "number" &&
+                    numericValue > question.max_value
+                  ) {
+                    e.target.value = question.max_value;
+                  }
+
+                  if (
+                    typeof question.min_value === "number" &&
+                    numericValue < question.min_value
+                  ) {
+                    e.target.value = question.min_value;
+                  }
+                }}
+                {...(question.min_value && { min: question.min_value })}
+                {...(question.max_value && { max: question.max_value })}
+                required={isRequired}
+                placeholder={isEnglish ? "Start value" : "শুরুর মান"}
+              />
+              <span className="text-gray-500">{isEnglish ? "to" : "থেকে"}</span>
+              <FormControl
+                type="number"
+                value={
+                  Array.isArray(question.value) ? question.value[1] || "" : ""
+                }
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+
+                  if (inputValue === "") {
+                    handleNumberRangeChange("", false);
+                    return;
+                  }
+                  const numericValue = Number(inputValue);
+
+                  if (isNaN(numericValue)) {
+                    return;
+                  }
+
+                  handleNumberRangeChange(numericValue, false);
+                }}
+                onInput={(e) => {
+                  const inputValue = e.target.value;
+                  const numericValue = Number(inputValue);
+
+                  if (
+                    typeof question.max_value === "number" &&
+                    numericValue > question.max_value
+                  ) {
+                    e.target.value = question.max_value;
+                  }
+
+                  if (
+                    typeof question.min_value === "number" &&
+                    numericValue < question.min_value
+                  ) {
+                    e.target.value = question.min_value;
+                  }
+                }}
+                {...(question.min_value && { min: question.min_value })}
+                {...(question.max_value && { max: question.max_value })}
+                required={isRequired}
+                placeholder={isEnglish ? "End value" : "শেষ মান"}
+              />
+            </div>
+          </div>
         )}
 
         {question.input_type === "date" && (
@@ -113,6 +371,36 @@ const Question = ({
             required={isRequired}
             placeholder={isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"}
           />
+        )}
+
+        {question.input_type === "date-range" && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <FormControl
+                type="date"
+                value={
+                  Array.isArray(question.value) && question.value[0]
+                    ? new Date(question.value[0]).toISOString().split("T")[0]
+                    : ""
+                }
+                onChange={(e) => handleDateRangeChange(e.target.value, true)}
+                required={isRequired}
+                placeholder={isEnglish ? "Start date" : "শুরুর তারিখ"}
+              />
+              <span className="text-gray-500">{isEnglish ? "to" : "থেকে"}</span>
+              <FormControl
+                type="date"
+                value={
+                  Array.isArray(question.value) && question.value[1]
+                    ? new Date(question.value[1]).toISOString().split("T")[0]
+                    : ""
+                }
+                onChange={(e) => handleDateRangeChange(e.target.value, false)}
+                required={isRequired}
+                placeholder={isEnglish ? "End date" : "শেষ তারিখ"}
+              />
+            </div>
+          </div>
         )}
 
         {question.input_type === "radio" && (
@@ -245,7 +533,9 @@ const OutletSurveyQuestionsPage = () => {
           value: q.value,
           ...(q.input_type === "number" && { value_number: q.value }),
           ...(q.input_type === "date" && { value_date: q.value }),
-          ...(q.input_type === "checkbox" && { value_array: q.value }),
+          ...(["checkbox", "number-range", "date-range"].includes(
+            q.input_type,
+          ) && { value_array: q.value }),
         }));
 
       const res = await axios.post(
