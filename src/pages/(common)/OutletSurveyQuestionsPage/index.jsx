@@ -5,477 +5,438 @@ import { Radio } from "@/components/ui/Radio";
 import URLS from "@/constants/urls";
 import useAuthenticationState from "@/hooks/state/useAuthenticationState";
 import useLanguageState from "@/hooks/state/useLanguageState";
-import { cn } from "@/lib/utils";
+
+import { cn, getOrdinal } from "@/lib/utils";
 import axios from "axios";
 import { Check } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const getOrdinal = (n) => {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+// ==============================
+// Helper Functions
+// ==============================
+const processQuestionValue = (question, value) => {
+  switch (question.input_type) {
+    case "text":
+    case "textarea": {
+      let processed = value;
+      if (question.isTextOnly) processed = processed.replace(/[^a-zA-Z ]/g, "");
+      if (!question.isTextOnly && !question.isAllowSpecialCharacter) {
+        processed = processed.replace(/[^a-zA-Z0-9 ]/g, "");
+      }
+      if (typeof question?.max_length === "number") {
+        processed = processed.slice(0, question.max_length);
+      }
+      return processed;
+    }
+
+    case "number": {
+      if (["", null, undefined].includes(value)) return "";
+      const numValue = Number(value);
+      if (
+        typeof question?.min_value === "number" &&
+        numValue < question.min_value
+      )
+        return "";
+      if (
+        typeof question?.max_value === "number" &&
+        numValue > question.max_value
+      )
+        return question.max_value;
+      return numValue;
+    }
+
+    case "number-range":
+      return Array.isArray(value)
+        ? [Number(value[0]), Number(value[1])]
+        : value;
+
+    case "date":
+      return new Date(value).toISOString();
+
+    case "date-range":
+      return Array.isArray(value)
+        ? [new Date(value[0]).toISOString(), new Date(value[1]).toISOString()]
+        : value;
+
+    case "checkbox":
+      return Array.isArray(value) ? value : [value];
+
+    default:
+      return value;
+  }
 };
 
-const GroupQuestion = ({
-  question,
-  base_index,
-  group_index,
-  index,
-  handleAddValue,
-  questions,
-  data = {},
-}) => {
-  const { isEnglish } = useLanguageState();
-  const dependenciesSatisfied = useMemo(() => {
+const interpolateText = (text, data) => {
+  return text?.replace(/{{\s*([\w.]+)\s*}}/g, (_, path) => {
+    return path.split(".").reduce((obj, key) => obj?.[key], data) ?? "";
+  });
+};
+
+const useDependenciesSatisfied = (dependencies, questions) => {
+  return useMemo(() => {
     return (
-      question.dependencies?.some((dep) => {
+      dependencies?.some((dep) => {
         const depQuestion = questions.find(
           (q) => q._id === dep.question.toString(),
         );
+        if (!depQuestion) return false;
 
         if (dep.value === "{{anything}}") {
-          return !!(
-            depQuestion?.value != "" &&
-            depQuestion?.value != null &&
-            depQuestion?.value !== undefined
-          );
+          return ![null, undefined, ""].includes(depQuestion?.value);
         }
+
         if (Array.isArray(depQuestion?.value)) {
-          return depQuestion?.value.some((val) => val === dep?.value);
+          return depQuestion.value.includes(dep.value);
         }
-        return depQuestion?.value === dep.value;
+
+        return depQuestion.value === dep.value;
       }) ?? false
     );
-  }, [question.dependencies, questions]);
+  }, [dependencies, questions]);
+};
 
-  const isVisible =
-    !question.isDependent ||
-    dependenciesSatisfied ||
-    (question?.base_dependencies?.length > 0 && index === 0);
-  const isRequired = question.isRequired;
+// ==============================
+// Input Components
+// ==============================
+const RangeInput = ({
+  question,
+  value,
+  onChange,
+  isRequired,
+  isEnglish,
+  prefix,
+}) => {
+  const handleChange = (val, isStart) => {
+    const current = Array.isArray(value) ? [...value] : ["", ""];
+    current[isStart ? 0 : 1] = val;
+    onChange(current);
+  };
 
-  const question_text = question?.question?.replace(
-    /{{\s*([\w.]+)\s*}}/g,
-    (_, path) => {
-      return path.split(".").reduce((obj, key) => obj?.[key], data) ?? "";
-    },
+  return (
+    <div className="flex items-center gap-2">
+      <FormControl
+        name={`${prefix}-start`}
+        type={question.input_type === "date-range" ? "date" : "number"}
+        value={Array.isArray(value) ? value[0] || "" : ""}
+        onChange={(e) => handleChange(e.target.value, true)}
+        required={isRequired}
+        placeholder={isEnglish ? "Start value" : "শুরুর মান"}
+      />
+      <span className="text-gray-500">{isEnglish ? "to" : "থেকে"}</span>
+      <FormControl
+        name={`${prefix}-end`}
+        type={question.input_type === "date-range" ? "date" : "number"}
+        value={Array.isArray(value) ? value[1] || "" : ""}
+        onChange={(e) => handleChange(e.target.value, false)}
+        required={isRequired}
+        placeholder={isEnglish ? "End value" : "শেষ মান"}
+      />
+    </div>
+  );
+};
+
+const OptionInput = ({ question, value, onChange, isRequired, type }) => (
+  <div className="space-y-2">
+    {question.options?.map((option) => (
+      <label key={option.value} className="flex items-center gap-2">
+        {type === "radio" ? (
+          <Radio
+            checked={value === option.value}
+            onChange={() => onChange(option.value)}
+            required={!value && isRequired}
+          />
+        ) : (
+          <Checkbox
+            checked={value?.includes(option.value)}
+            onChange={(e) => {
+              const newValue = e.target.checked
+                ? [...(value || []), option.value]
+                : (value || []).filter((v) => v !== option.value);
+              onChange(newValue);
+            }}
+            required={!(value?.length > 0) && isRequired}
+          />
+        )}
+        <span>{option.label}</span>
+      </label>
+    ))}
+  </div>
+);
+
+const QuestionInput = ({
+  question,
+  value,
+  onChange,
+  isRequired,
+  isEnglish,
+  name,
+}) => {
+  const commonProps = {
+    value: value || "",
+    onChange: (e) => onChange(e.target.value),
+    required: isRequired,
+    placeholder: isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন",
+  };
+
+  switch (question.input_type) {
+    case "text":
+    case "email":
+      return (
+        <FormControl name={name} type={question.input_type} {...commonProps} />
+      );
+
+    case "textarea":
+      return (
+        <FormControl
+          name={name}
+          as="textarea"
+          rows={4}
+          className="h-[5rem] resize-y items-start py-1"
+          {...commonProps}
+        />
+      );
+
+    case "number":
+      return (
+        <FormControl
+          name={name}
+          type="number"
+          {...commonProps}
+          onInput={(e) => {
+            const numValue = Number(e.target.value);
+            if (question.max_value && numValue > question.max_value) {
+              e.target.value = question.max_value;
+            }
+            if (question.min_value && numValue < question.min_value) {
+              e.target.value = "";
+            }
+          }}
+        />
+      );
+
+    case "number-range":
+    case "date-range":
+      return (
+        <RangeInput
+          question={question}
+          value={value}
+          onChange={onChange}
+          isRequired={isRequired}
+          isEnglish={isEnglish}
+          prefix={name}
+        />
+      );
+
+    case "date":
+      return (
+        <FormControl
+          name={name}
+          type="date"
+          value={value ? new Date(value).toISOString().split("T")[0] : ""}
+          {...commonProps}
+        />
+      );
+
+    case "radio":
+    case "checkbox":
+      return (
+        <OptionInput
+          question={question}
+          value={value}
+          onChange={onChange}
+          isRequired={isRequired}
+          type={question.input_type}
+        />
+      );
+
+    case "select":
+      return (
+        <FormControl
+          name={name}
+          as="select"
+          className="w-full rounded border p-2"
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          required={isRequired}
+        >
+          <option value="">
+            {isEnglish ? "Select an option" : "একটি অপশন নির্বাচন করুন"}
+          </option>
+          {question.options?.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </FormControl>
+      );
+
+    default:
+      return null;
+  }
+};
+
+// ==============================
+// Question Components
+// ==============================
+const BaseQuestion = ({ question, questions, data, onValueChange }) => {
+  const { isEnglish } = useLanguageState();
+  const [groupQuestions, setGroupQuestions] = useState([]);
+  const dependenciesSatisfied = useDependenciesSatisfied(
+    question.dependencies,
+    questions,
   );
 
+  const isVisible = useMemo(() => {
+    const hasDependencies = question.isDependent && !dependenciesSatisfied;
+    const hasBaseDependencies = question.base_dependencies?.length > 0;
+    return !hasDependencies && !hasBaseDependencies;
+  }, [question, dependenciesSatisfied]);
+
+  const questionText = useMemo(
+    () => interpolateText(question.question, data),
+    [question.question, data],
+  );
+
+  useEffect(() => {
+    if (question.value && question.base_group_dependencies?.length > 0) {
+      const groupChunk = questions.filter((q) =>
+        question.base_group_dependencies.some((d) => d.question === q._id),
+      );
+      setGroupQuestions(Array(question.value).fill(groupChunk));
+    }
+  }, [question, questions]);
+
+  const name = `question-${question.serial}`;
+
   const handleValueChange = (value) => {
-    let processedValue = value;
-
-    switch (question.input_type) {
-      case "text":
-      case "textarea":
-        if (question.isTextOnly) {
-          processedValue = processedValue.replace(/[^a-zA-Z ]/g, "");
-        }
-        if (!question.isTextOnly && !question.isAllowSpecialCharacter) {
-          processedValue = processedValue.replace(/[^a-zA-Z0-9 ]/g, "");
-        }
-        if (typeof question?.max_length === "number") {
-          processedValue = processedValue.slice(0, question.max_length);
-        }
-        break;
-      case "number":
-        // Handle empty string case
-        if (value === "" || value === null || value === undefined) {
-          processedValue = "";
-          break;
-        }
-
-        processedValue = Number(value);
-
-        // Apply constraints
-        if (
-          typeof question?.min_value === "number" &&
-          processedValue < question.min_value
-        ) {
-          processedValue = "";
-        }
-        if (
-          typeof question?.max_value === "number" &&
-          processedValue > question.max_value
-        ) {
-          processedValue = question.max_value;
-        }
-        break;
-      case "number-range":
-        if (Array.isArray(value)) {
-          processedValue = [Number(value[0]), Number(value[1])];
-        }
-        break;
-      case "date":
-        processedValue = new Date(value).toISOString();
-        break;
-      case "date-range":
-        if (Array.isArray(value)) {
-          processedValue = [
-            new Date(value[0]).toISOString(),
-            new Date(value[1]).toISOString(),
-          ];
-        }
-        break;
-      case "checkbox":
-        processedValue = Array.isArray(value) ? value : [value];
-        break;
-      default:
-        processedValue = value;
-    }
-
-    handleAddValue(processedValue, index);
-  };
-
-  // Helper function for number-range input with validation
-  const handleNumberRangeChange = (value, isStart) => {
-    const currentValue = Array.isArray(question.value)
-      ? question.value
-      : [0, 0];
-    const newValue = [...currentValue];
-
-    // Handle empty string case
-    if (value === "" || value === null || value === undefined) {
-      newValue[isStart ? 0 : 1] = "";
-      handleValueChange(newValue);
-      return;
-    }
-
-    const numericValue = Number(value);
-
-    // Validate if it's a valid number
-    if (isNaN(numericValue)) {
-      return;
-    }
-
-    let constrainedValue = numericValue;
-
-    // Apply min/max constraints
-    if (
-      typeof question.min_value === "number" &&
-      numericValue < question.min_value
-    ) {
-      constrainedValue = "";
-    }
-
-    if (
-      typeof question.max_value === "number" &&
-      numericValue > question.max_value
-    ) {
-      constrainedValue = question.max_value;
-    }
-
-    newValue[isStart ? 0 : 1] = constrainedValue;
-    handleValueChange(newValue);
-  };
-
-  // Helper function for date-range input
-  const handleDateRangeChange = (value, isStart) => {
-    const currentValue = Array.isArray(question.value)
-      ? question.value
-      : ["", ""];
-    const newValue = [...currentValue];
-    newValue[isStart ? 0 : 1] = value;
-    handleValueChange(newValue);
+    onValueChange(processQuestionValue(question, value));
   };
 
   if (!isVisible) return null;
 
   return (
-    <div>
-      <div
-        className={cn(`mb-6 rounded-lg p-4`, {
-          "border-l-4 border-l-primary/15 pl-3": question.isDependent,
-        })}
-      >
+    <div className="mb-6 space-y-4 rounded-lg p-4">
+      <div className="space-y-2">
         <div className="mb-3">
-          <p className={`font-medium text-primary`}>
-            {question.serial}. {} {question_text}
-            {isRequired && <span className="ml-1 text-red-500">*</span>}
+          <p className="font-medium text-primary">
+            {question.serial}. {questionText}
+            {question.isRequired && (
+              <span className="ml-1 text-red-500">*</span>
+            )}
           </p>
           {question.note && (
             <small className="italic text-gray-500">{question.note}</small>
           )}
         </div>
 
-        <div className="space-y-2">
-          {question.input_type === "text" && (
-            <FormControl
-              name={`question-${question.serial}-${base_index}-${group_index}-${index}`}
-              type="text"
-              value={question.value || ""}
-              onChange={(e) => handleValueChange(e.target.value)}
-              required={isRequired}
-              placeholder={
-                isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"
-              }
-            />
-          )}
-
-          {question.input_type === "textarea" && (
-            <FormControl
-              name={`question-${question.serial}-${base_index}-${group_index}-${index}`}
-              as="textarea"
-              type="text"
-              rows={4}
-              className="h-[5rem] resize-y items-start py-1"
-              value={question.value || ""}
-              onChange={(e) => handleValueChange(e.target.value)}
-              required={isRequired}
-              placeholder={
-                isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"
-              }
-            />
-          )}
-
-          {question.input_type === "email" && (
-            <FormControl
-              name={`question-${question.serial}-${base_index}-${group_index}-${index}`}
-              type="email"
-              value={question.value || ""}
-              onChange={(e) => handleValueChange(e.target.value)}
-              required={isRequired}
-              placeholder={
-                isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"
-              }
-            />
-          )}
-
-          {question.input_type === "number" && (
-            <FormControl
-              name={`question-${question.serial}-${base_index}-${group_index}-${index}`}
-              type="number"
-              value={question.value || ""}
-              onChange={(e) => handleValueChange(Number(e.target.value))}
-              onInput={(e) => {
-                const inputValue = e.target.value;
-                const numericValue = Number(inputValue);
-
-                if (
-                  typeof question.max_value === "number" &&
-                  numericValue > question.max_value
-                ) {
-                  e.target.value = question.max_value;
-                }
-
-                if (
-                  typeof question.min_value === "number" &&
-                  numericValue < question.min_value
-                ) {
-                  e.target.value = "";
-                }
-              }}
-              {...(question.min_value && { min: question.min_value })}
-              {...(question.max_value && { max: question.max_value })}
-              required={isRequired}
-              placeholder={
-                isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"
-              }
-            />
-          )}
-
-          {question.input_type === "number-range" && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <FormControl
-                  name={`question-${question.serial}-${base_index}-${group_index}-${index}-start`}
-                  type="number"
-                  value={
-                    Array.isArray(question.value) ? question.value[0] || "" : ""
-                  }
-                  onChange={(e) =>
-                    handleNumberRangeChange(e.target.value, true)
-                  }
-                  onInput={(e) => {
-                    const inputValue = e.target.value;
-                    const numericValue = Number(inputValue);
-
-                    if (
-                      typeof question.max_value === "number" &&
-                      numericValue > question.max_value
-                    ) {
-                      e.target.value = question.max_value;
-                    }
-
-                    if (
-                      typeof question.min_value === "number" &&
-                      numericValue < question.min_value
-                    ) {
-                      e.target.value = "";
-                    }
-                  }}
-                  {...(question.min_value && { min: question.min_value })}
-                  {...(question.max_value && { max: question.max_value })}
-                  required={isRequired}
-                  placeholder={isEnglish ? "Start value" : "শুরুর মান"}
-                />
-                <span className="text-gray-500">
-                  {isEnglish ? "to" : "থেকে"}
-                </span>
-                <FormControl
-                  name={`question-${question.serial}-${base_index}-${group_index}-${index}-end`}
-                  type="number"
-                  value={
-                    Array.isArray(question.value) ? question.value[1] || "" : ""
-                  }
-                  onChange={(e) =>
-                    handleNumberRangeChange(e.target.value, false)
-                  }
-                  onInput={(e) => {
-                    const inputValue = e.target.value;
-                    const numericValue = Number(inputValue);
-
-                    if (
-                      typeof question.max_value === "number" &&
-                      numericValue > question.max_value
-                    ) {
-                      e.target.value = question.max_value;
-                    }
-
-                    if (
-                      typeof question.min_value === "number" &&
-                      numericValue < question.min_value
-                    ) {
-                      e.target.value = "";
-                    }
-                  }}
-                  {...(question.min_value && { min: question.min_value })}
-                  {...(question.max_value && { max: question.max_value })}
-                  required={isRequired}
-                  placeholder={isEnglish ? "End value" : "শেষ মান"}
-                />
-              </div>
-            </div>
-          )}
-
-          {question.input_type === "date" && (
-            <FormControl
-              name={`question-${question.serial}-${base_index}-${group_index}-${index}`}
-              type={"date"}
-              value={
-                question.value
-                  ? new Date(question.value).toISOString().split("T")[0]
-                  : ""
-              }
-              onChange={(e) => handleValueChange(e.target.value)}
-              required={isRequired}
-              placeholder={
-                isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"
-              }
-            />
-          )}
-
-          {question.input_type === "date-range" && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <FormControl
-                  name={`question-${question.serial}-${base_index}-${group_index}-${index}-start`}
-                  type="date"
-                  value={
-                    Array.isArray(question.value) && question.value[0]
-                      ? new Date(question.value[0]).toISOString().split("T")[0]
-                      : ""
-                  }
-                  onChange={(e) => handleDateRangeChange(e.target.value, true)}
-                  required={isRequired}
-                  placeholder={isEnglish ? "Start date" : "শুরুর তারিখ"}
-                />
-                <span className="text-gray-500">
-                  {isEnglish ? "to" : "থেকে"}
-                </span>
-                <FormControl
-                  name={`question-${question.serial}-${base_index}-${group_index}-${index}-end`}
-                  type="date"
-                  value={
-                    Array.isArray(question.value) && question.value[1]
-                      ? new Date(question.value[1]).toISOString().split("T")[0]
-                      : ""
-                  }
-                  onChange={(e) => handleDateRangeChange(e.target.value, false)}
-                  required={isRequired}
-                  placeholder={isEnglish ? "End date" : "শেষ তারিখ"}
-                />
-              </div>
-            </div>
-          )}
-
-          {question.input_type === "radio" && (
-            <div className="space-y-2">
-              {question.options?.map((option) => (
-                <label key={option.value} className="flex items-center gap-2">
-                  <Radio
-                    name={`question-${question.serial}-${base_index}-${group_index}-${index}`}
-                    checked={question.value === option.value}
-                    onChange={() => handleValueChange(option.value)}
-                    required={!question?.value && isRequired}
-                  />
-                  <span>{option.label}</span>
-                </label>
-              ))}
-            </div>
-          )}
-
-          {question.input_type === "checkbox" && (
-            <div className="space-y-2">
-              {question.options?.map((option) => (
-                <label key={option.value} className="flex items-center gap-2">
-                  <Checkbox
-                    name={`question-${question.serial}-${base_index}-${group_index}-${index}`}
-                    checked={question.value?.includes(option.value)}
-                    onChange={(e) => {
-                      const newValue = e.target.checked
-                        ? [...(question.value || []), option.value]
-                        : (question.value || []).filter(
-                            (v) => v !== option.value,
-                          );
-                      handleValueChange(newValue);
-                    }}
-                    required={!(question?.value?.length > 0) && isRequired}
-                  />
-                  <span>{option.label}</span>
-                </label>
-              ))}
-            </div>
-          )}
-
-          {question.input_type === "select" && (
-            <FormControl
-              name={`question-${question.serial}-${base_index}-${group_index}-${index}`}
-              as="select"
-              className="w-full rounded border p-2"
-              value={question.value || ""}
-              onChange={(e) => handleValueChange(e.target.value)}
-              required={isRequired}
-            >
-              <option value="">
-                {isEnglish ? "Select an option" : "একটি অপশন নির্বাচন করুন"}
-              </option>
-              {question.options?.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </FormControl>
-          )}
-        </div>
+        <QuestionInput
+          question={question}
+          value={question.value}
+          onChange={handleValueChange}
+          isRequired={question.isRequired}
+          isEnglish={isEnglish}
+          name={name}
+        />
       </div>
+
+      {question?.value && groupQuestions.length > 0 && (
+        <div className="space-y-6 border border-primary p-4">
+          {groupQuestions.map((gq, idx) => (
+            <GroupQuestionsChunk
+              key={idx}
+              baseIndex={question._id}
+              index={idx}
+              question={question}
+              questions={gq}
+              data={data}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-const GroupQuestionsChank = ({
-  base_index,
+const GroupQuestion = ({
+  question,
+  baseIndex,
+  groupIndex,
+  index,
+  onValueChange,
+  questions,
+  data,
+}) => {
+  const { isEnglish } = useLanguageState();
+  const dependenciesSatisfied = useDependenciesSatisfied(
+    question.dependencies,
+    questions,
+  );
+
+  const isVisible = useMemo(() => {
+    const isFirstInGroup =
+      question.base_dependencies?.length > 0 && index === 0;
+    return !question.isDependent || dependenciesSatisfied || isFirstInGroup;
+  }, [question, dependenciesSatisfied, index]);
+
+  const questionText = useMemo(
+    () => interpolateText(question.question, data),
+    [question.question, data],
+  );
+
+  const name = `question-${question.serial}-${baseIndex}-${groupIndex}-${index}`;
+
+  const handleValueChange = (value) => {
+    onValueChange(processQuestionValue(question, value), index);
+  };
+
+  if (!isVisible) return null;
+
+  return (
+    <div
+      className={cn("mb-6 rounded-lg p-4", {
+        "border-l-4 border-l-primary/15 pl-3": question.isDependent,
+      })}
+    >
+      <div className="mb-3">
+        <p className="font-medium text-primary">
+          {question.serial}. {questionText}
+          {question.isRequired && <span className="ml-1 text-red-500">*</span>}
+        </p>
+        {question.note && (
+          <small className="italic text-gray-500">{question.note}</small>
+        )}
+      </div>
+
+      <QuestionInput
+        question={question}
+        value={question.value}
+        onChange={handleValueChange}
+        isRequired={question.isRequired}
+        isEnglish={isEnglish}
+        name={name}
+      />
+    </div>
+  );
+};
+
+const GroupQuestionsChunk = ({
+  baseIndex,
   index,
   question,
-  questions: questionsChank,
-  data = {},
+  questions: initialQuestions,
+  data,
 }) => {
-  const [questions, setQuestions] = useState(questionsChank || []);
-  const handleValueUpdate = (value, index) => {
-    const updated = [...questions];
-    updated[index].value = value;
-    setQuestions(updated);
-  };
+  const [questions, setQuestions] = useState([...(initialQuestions ?? [])]);
+
+  const handleValueUpdate = useCallback((value, idx) => {
+    setQuestions((prev) => {
+      const updated = [...prev];
+      updated[idx].value = value;
+      return updated;
+    });
+  }, []);
+
   return (
     <div className="bg-primary/10 p-2">
       <p className="mb-4 text-lg font-semibold text-primary">
@@ -488,14 +449,14 @@ const GroupQuestionsChank = ({
         {`প্রসঙ্গত প্রশ্ন (${question?.serial})`}
       </p>
       <div className="space-y-4">
-        {questions?.map((q, i) => (
+        {questions.map((q, i) => (
           <GroupQuestion
             key={i}
             question={q}
-            base_index={base_index}
-            group_index={index}
+            baseIndex={baseIndex}
+            groupIndex={index}
             index={i}
-            handleAddValue={handleValueUpdate}
+            onValueChange={handleValueUpdate}
             questions={questions}
             data={data}
           />
@@ -505,475 +466,9 @@ const GroupQuestionsChank = ({
   );
 };
 
-const Question = ({
-  question,
-  index,
-  handleAddValue,
-  questions,
-  data = {},
-}) => {
-  const [groupQuestions, setGroupQuestions] = useState([]);
-  const { isEnglish } = useLanguageState();
-  const dependenciesSatisfied = useMemo(() => {
-    return (
-      question.dependencies?.some((dep) => {
-        const depQuestion = questions.find(
-          (q) => q._id === dep.question.toString(),
-        );
-
-        if (dep.value === "{{anything}}") {
-          return !!(
-            depQuestion?.value != "" &&
-            depQuestion?.value != null &&
-            depQuestion?.value !== undefined
-          );
-        }
-        if (Array.isArray(depQuestion?.value)) {
-          return depQuestion?.value.some((val) => val === dep?.value);
-        }
-        return depQuestion?.value === dep.value;
-      }) ?? false
-    );
-  }, [question.dependencies, questions]);
-
-  useEffect(() => {
-    if (question.value && question.base_group_dependencies?.length > 0) {
-      const groupQuestionsChank = questions.filter((q) =>
-        question.base_group_dependencies.some((d) => d.question === q._id),
-      );
-      const groupQuestions = [];
-      const value_array = [...Array(question.value || 0).keys()];
-      value_array.forEach((_) => {
-        groupQuestions.push(groupQuestionsChank || []);
-      });
-
-      setGroupQuestions(groupQuestions);
-    }
-  }, [question, questions]);
-
-  const isVisible =
-    (!question.isDependent || dependenciesSatisfied) &&
-    !(question.base_dependencies?.length > 0);
-  const isRequired = question.isRequired;
-
-  const question_text = question?.question?.replace(
-    /{{\s*([\w.]+)\s*}}/g,
-    (_, path) => {
-      return path.split(".").reduce((obj, key) => obj?.[key], data) ?? "";
-    },
-  );
-
-  const handleValueChange = (value) => {
-    let processedValue = value;
-
-    switch (question.input_type) {
-      case "text":
-      case "textarea":
-        if (question.isTextOnly) {
-          processedValue = processedValue.replace(/[^a-zA-Z ]/g, "");
-        }
-        if (!question.isTextOnly && !question.isAllowSpecialCharacter) {
-          processedValue = processedValue.replace(/[^a-zA-Z0-9 ]/g, "");
-        }
-        if (typeof question?.max_length === "number") {
-          processedValue = processedValue.slice(0, question.max_length);
-        }
-        break;
-      case "number":
-        // Handle empty string case
-        if (value === "" || value === null || value === undefined) {
-          processedValue = "";
-          break;
-        }
-
-        processedValue = Number(value);
-
-        // Apply constraints
-        if (
-          typeof question?.min_value === "number" &&
-          processedValue < question.min_value
-        ) {
-          processedValue = "";
-        }
-        if (
-          typeof question?.max_value === "number" &&
-          processedValue > question.max_value
-        ) {
-          processedValue = question.max_value;
-        }
-        break;
-      case "number-range":
-        if (Array.isArray(value)) {
-          processedValue = [Number(value[0]), Number(value[1])];
-        }
-        break;
-      case "date":
-        processedValue = new Date(value).toISOString();
-        break;
-      case "date-range":
-        if (Array.isArray(value)) {
-          processedValue = [
-            new Date(value[0]).toISOString(),
-            new Date(value[1]).toISOString(),
-          ];
-        }
-        break;
-      case "checkbox":
-        processedValue = Array.isArray(value) ? value : [value];
-        break;
-      default:
-        processedValue = value;
-    }
-
-    handleAddValue(processedValue, index);
-  };
-
-  // Helper function for number-range input with validation
-  const handleNumberRangeChange = (value, isStart) => {
-    const currentValue = Array.isArray(question.value)
-      ? question.value
-      : [0, 0];
-    const newValue = [...currentValue];
-
-    // Handle empty string case
-    if (value === "" || value === null || value === undefined) {
-      newValue[isStart ? 0 : 1] = "";
-      handleValueChange(newValue);
-      return;
-    }
-
-    const numericValue = Number(value);
-
-    // Validate if it's a valid number
-    if (isNaN(numericValue)) {
-      return;
-    }
-
-    let constrainedValue = numericValue;
-
-    // Apply min/max constraints
-    if (
-      typeof question.min_value === "number" &&
-      numericValue < question.min_value
-    ) {
-      constrainedValue = "";
-    }
-
-    if (
-      typeof question.max_value === "number" &&
-      numericValue > question.max_value
-    ) {
-      constrainedValue = question.max_value;
-    }
-
-    newValue[isStart ? 0 : 1] = constrainedValue;
-    handleValueChange(newValue);
-  };
-
-  // Helper function for date-range input
-  const handleDateRangeChange = (value, isStart) => {
-    const currentValue = Array.isArray(question.value)
-      ? question.value
-      : ["", ""];
-    const newValue = [...currentValue];
-    newValue[isStart ? 0 : 1] = value;
-    handleValueChange(newValue);
-  };
-
-  if (!isVisible) return null;
-
-  return (
-    <div className="mb-6 space-y-4 rounded-lg p-4">
-      <div className="space-y-2">
-        <div className="mb-3">
-          <p className={`font-medium text-primary`}>
-            {question.serial}. {question_text}
-            {isRequired && <span className="ml-1 text-red-500">*</span>}
-          </p>
-          {question.note && (
-            <small className="italic text-gray-500">{question.note}</small>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          {question.input_type === "text" && (
-            <FormControl
-              name={`question-${question.serial}`}
-              type="text"
-              value={question.value || ""}
-              onChange={(e) => handleValueChange(e.target.value)}
-              required={isRequired}
-              placeholder={
-                isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"
-              }
-            />
-          )}
-
-          {question.input_type === "textarea" && (
-            <FormControl
-              name={`question-${question.serial}`}
-              as="textarea"
-              type="text"
-              rows={4}
-              className="h-[5rem] resize-y items-start py-1"
-              value={question.value || ""}
-              onChange={(e) => handleValueChange(e.target.value)}
-              required={isRequired}
-              placeholder={
-                isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"
-              }
-            />
-          )}
-
-          {question.input_type === "email" && (
-            <FormControl
-              name={`question-${question.serial}`}
-              type="email"
-              value={question.value || ""}
-              onChange={(e) => handleValueChange(e.target.value)}
-              required={isRequired}
-              placeholder={
-                isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"
-              }
-            />
-          )}
-
-          {question.input_type === "number" && (
-            <FormControl
-              name={`question-${question.serial}`}
-              type="number"
-              value={question.value || ""}
-              onChange={(e) => handleValueChange(Number(e.target.value))}
-              onInput={(e) => {
-                const inputValue = e.target.value;
-                const numericValue = Number(inputValue);
-
-                if (
-                  typeof question.max_value === "number" &&
-                  numericValue > question.max_value
-                ) {
-                  e.target.value = question.max_value;
-                }
-
-                if (
-                  typeof question.min_value === "number" &&
-                  numericValue < question.min_value
-                ) {
-                  e.target.value = "";
-                }
-              }}
-              {...(question.min_value && { min: question.min_value })}
-              {...(question.max_value && { max: question.max_value })}
-              required={isRequired}
-              placeholder={
-                isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"
-              }
-            />
-          )}
-
-          {question.input_type === "number-range" && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <FormControl
-                  name={`question-${question.serial}-start`}
-                  type="number"
-                  value={
-                    Array.isArray(question.value) ? question.value[0] || "" : ""
-                  }
-                  onChange={(e) =>
-                    handleNumberRangeChange(e.target.value, true)
-                  }
-                  onInput={(e) => {
-                    const inputValue = e.target.value;
-                    const numericValue = Number(inputValue);
-
-                    if (
-                      typeof question.max_value === "number" &&
-                      numericValue > question.max_value
-                    ) {
-                      e.target.value = question.max_value;
-                    }
-
-                    if (
-                      typeof question.min_value === "number" &&
-                      numericValue < question.min_value
-                    ) {
-                      e.target.value = "";
-                    }
-                  }}
-                  {...(question.min_value && { min: question.min_value })}
-                  {...(question.max_value && { max: question.max_value })}
-                  required={isRequired}
-                  placeholder={isEnglish ? "Start value" : "শুরুর মান"}
-                />
-                <span className="text-gray-500">
-                  {isEnglish ? "to" : "থেকে"}
-                </span>
-                <FormControl
-                  name={`question-${question.serial}-end`}
-                  type="number"
-                  value={
-                    Array.isArray(question.value) ? question.value[1] || "" : ""
-                  }
-                  onChange={(e) =>
-                    handleNumberRangeChange(e.target.value, false)
-                  }
-                  onInput={(e) => {
-                    const inputValue = e.target.value;
-                    const numericValue = Number(inputValue);
-
-                    if (
-                      typeof question.max_value === "number" &&
-                      numericValue > question.max_value
-                    ) {
-                      e.target.value = question.max_value;
-                    }
-
-                    if (
-                      typeof question.min_value === "number" &&
-                      numericValue < question.min_value
-                    ) {
-                      e.target.value = "";
-                    }
-                  }}
-                  {...(question.min_value && { min: question.min_value })}
-                  {...(question.max_value && { max: question.max_value })}
-                  required={isRequired}
-                  placeholder={isEnglish ? "End value" : "শেষ মান"}
-                />
-              </div>
-            </div>
-          )}
-
-          {question.input_type === "date" && (
-            <FormControl
-              name={`question-${question.serial}`}
-              type={"date"}
-              value={
-                question.value
-                  ? new Date(question.value).toISOString().split("T")[0]
-                  : ""
-              }
-              onChange={(e) => handleValueChange(e.target.value)}
-              required={isRequired}
-              placeholder={
-                isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"
-              }
-            />
-          )}
-
-          {question.input_type === "date-range" && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <FormControl
-                  name={`question-${question.serial}-start`}
-                  type="date"
-                  value={
-                    Array.isArray(question.value) && question.value[0]
-                      ? new Date(question.value[0]).toISOString().split("T")[0]
-                      : ""
-                  }
-                  onChange={(e) => handleDateRangeChange(e.target.value, true)}
-                  required={isRequired}
-                  placeholder={isEnglish ? "Start date" : "শুরুর তারিখ"}
-                />
-                <span className="text-gray-500">
-                  {isEnglish ? "to" : "থেকে"}
-                </span>
-                <FormControl
-                  name={`question-${question.serial}-end`}
-                  type="date"
-                  value={
-                    Array.isArray(question.value) && question.value[1]
-                      ? new Date(question.value[1]).toISOString().split("T")[0]
-                      : ""
-                  }
-                  onChange={(e) => handleDateRangeChange(e.target.value, false)}
-                  required={isRequired}
-                  placeholder={isEnglish ? "End date" : "শেষ তারিখ"}
-                />
-              </div>
-            </div>
-          )}
-
-          {question.input_type === "radio" && (
-            <div className="space-y-2">
-              {question.options?.map((option) => (
-                <label key={option.value} className="flex items-center gap-2">
-                  <Radio
-                    name={`question-${question.serial}`}
-                    checked={question.value === option.value}
-                    onChange={() => handleValueChange(option.value)}
-                    required={!question?.value && isRequired}
-                  />
-                  <span>{option.label}</span>
-                </label>
-              ))}
-            </div>
-          )}
-
-          {question.input_type === "checkbox" && (
-            <div className="space-y-2">
-              {question.options?.map((option) => (
-                <label key={option.value} className="flex items-center gap-2">
-                  <Checkbox
-                    name={`question-${question.serial}`}
-                    checked={question.value?.includes(option.value)}
-                    onChange={(e) => {
-                      const newValue = e.target.checked
-                        ? [...(question.value || []), option.value]
-                        : (question.value || []).filter(
-                            (v) => v !== option.value,
-                          );
-                      handleValueChange(newValue);
-                    }}
-                    required={!(question?.value?.length > 0) && isRequired}
-                  />
-                  <span>{option.label}</span>
-                </label>
-              ))}
-            </div>
-          )}
-
-          {question.input_type === "select" && (
-            <FormControl
-              name={`question-${question.serial}`}
-              as="select"
-              className="w-full rounded border p-2"
-              value={question.value || ""}
-              onChange={(e) => handleValueChange(e.target.value)}
-              required={isRequired}
-            >
-              <option value="">
-                {isEnglish ? "Select an option" : "একটি অপশন নির্বাচন করুন"}
-              </option>
-              {question.options?.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </FormControl>
-          )}
-        </div>
-      </div>
-      {!!question.value && groupQuestions.length > 0 && (
-        <div className="space-y-6 border border-primary p-4">
-          {groupQuestions.map((gq, group_index) => (
-            <GroupQuestionsChank
-              key={group_index}
-              base_index={index}
-              index={group_index}
-              question={question}
-              questions={gq}
-              data={data}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
+// ==============================
+// Main Page Component
+// ==============================
 const OutletSurveyQuestionsPage = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -989,18 +484,17 @@ const OutletSurveyQuestionsPage = () => {
   const outletId = outlet?._id;
   const outletCode = outlet?.code;
 
-  const data = {
-    outlet,
-    state,
-  };
+  const data = useMemo(() => ({ outlet, state }), [outlet, state]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchSurveyData = async () => {
+      if (!phaseId || !outletId) return;
+
       try {
         const { data } = await axios.get(
-          URLS.baseURL + `/api/outlet-survey/get-surveys`,
+          `${URLS.baseURL}/api/outlet-survey/get-surveys`,
           {
-            params: { phaseId: phaseId, outletId: outletId },
+            params: { phaseId, outletId },
             headers: { Authorization: user },
           },
         );
@@ -1026,8 +520,8 @@ const OutletSurveyQuestionsPage = () => {
       }
     };
 
-    if (phaseId && outletId) fetchData();
-  }, [phaseId, outletId, user]);
+    fetchSurveyData();
+  }, [phaseId, outletId, user, phase]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1048,16 +542,17 @@ const OutletSurveyQuestionsPage = () => {
           ...(q.input_type === "date" && { value_date: q.value }),
           ...(["checkbox", "number-range", "date-range"].includes(
             q.input_type,
-          ) && { value_array: q.value }),
+          ) && {
+            value_array: q.value,
+          }),
         }));
 
-      const res = await axios.post(
-        URLS.baseURL + "/api/outlet-survey/create-surveys",
+      await axios.post(
+        `${URLS.baseURL}/api/outlet-survey/create-surveys`,
         { surveys: payload },
         { headers: { Authorization: user } },
       );
 
-      console.log("Submission response:", res);
       setSuccessModal(true);
     } catch (error) {
       console.error("Submission error:", error);
@@ -1067,11 +562,13 @@ const OutletSurveyQuestionsPage = () => {
     }
   };
 
-  const handleValueUpdate = (value, index) => {
-    const updated = [...questions];
-    updated[index].value = value;
-    setQuestions(updated);
-  };
+  const handleValueUpdate = useCallback((value, index) => {
+    setQuestions((prev) => {
+      const updated = [...prev];
+      updated[index].value = value;
+      return updated;
+    });
+  }, []);
 
   if (!phase || isLoading) {
     return (
@@ -1081,93 +578,49 @@ const OutletSurveyQuestionsPage = () => {
     );
   }
 
+  const outletFields = [
+    { label: "Outlet Name", value: outlet?.name },
+    { label: "Outlet Code", value: outlet?.code },
+    { label: "Retailer Name", value: outlet?.retailer?.name },
+    { label: "Retailer Number", value: outlet?.retailer?.phone },
+    { label: "Retailer Address", value: outlet?.retailer?.address },
+    { label: "Retailer Category", value: outlet?.category },
+  ];
+
   return (
     <main>
       <section className="py-4">
         <div className="container">
           <h1 className="mb-6 text-2xl font-bold">{phase?.name}</h1>
 
-          {Object.keys(outlet || {})?.length > 0 && (
+          {outlet && (
             <div className="space-y-2">
-              <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
-                <span className="text-sm leading-none">
-                  {isEnglish ? "Outlet Name" : "আউটলেট নাম"}
-                </span>
-                <FormControl
-                  as="div"
-                  className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
-                >
-                  {outlet?.name}
-                </FormControl>
-              </div>
-              <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
-                <span className="text-sm leading-none">
-                  {isEnglish ? "Outlet Code" : "আউটলেট কোড"}
-                </span>
-                <FormControl
-                  as="div"
-                  className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
-                >
-                  {outlet?.code}
-                </FormControl>
-              </div>
-              <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
-                <span className="text-sm leading-none">
-                  {isEnglish ? "Retailer Name" : "রিটেলার নাম"}
-                </span>
-                <FormControl
-                  as="div"
-                  className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
-                >
-                  {outlet?.retailer?.name}
-                </FormControl>
-              </div>
-              <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
-                <span className="text-sm leading-none">
-                  {isEnglish ? "Retailer Number" : "রিটেলার নাম্বার"}
-                </span>
-                <FormControl
-                  as="div"
-                  className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
-                >
-                  {outlet?.retailer?.phone}
-                </FormControl>
-              </div>
-              <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
-                <span className="text-sm leading-none">
-                  {isEnglish ? "Retailer Address" : "রিটেলার ঠিকানা"}
-                </span>
-                <FormControl
-                  as="div"
-                  className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
-                >
-                  {outlet?.retailer?.address}
-                </FormControl>
-              </div>
-              <div className="grid cursor-pointer grid-cols-4 items-center gap-2">
-                <span className="text-sm leading-none">
-                  {isEnglish ? "Retailer Category" : "রিটেলার ক্যাটাগরি"}
-                </span>
-                <FormControl
-                  as="div"
-                  className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
-                >
-                  {outlet?.category}
-                </FormControl>
-              </div>
+              {outletFields.map((field, idx) => (
+                <div key={idx} className="grid grid-cols-4 items-center gap-2">
+                  <span className="text-sm leading-none">
+                    {isEnglish ? field.label : field.label}
+                  </span>
+                  <FormControl
+                    as="div"
+                    className="pointer-events-none col-span-3 h-auto min-h-form-control justify-center text-center text-sm"
+                  >
+                    {field.value}
+                  </FormControl>
+                </div>
+              ))}
             </div>
           )}
 
           <form className="mt-6" onSubmit={handleSubmit}>
             <div className="border border-primary p-2">
               {questions.map((question, index) => (
-                <Question
+                <BaseQuestion
                   key={question._id}
-                  index={index}
-                  data={data}
                   question={question}
+                  index={index}
                   questions={questions}
-                  handleAddValue={handleValueUpdate}
+                  data={data}
+                  onValueChange={(value) => handleValueUpdate(value, index)}
                 />
               ))}
             </div>
@@ -1186,60 +639,65 @@ const OutletSurveyQuestionsPage = () => {
           </form>
 
           {successModal && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="rounded-lg bg-white p-8 text-center">
-                <div className="mb-4">
-                  <Check className="mx-auto mb-4 text-green-500" size={40} />
-                  <h2 className="mb-2 text-xl font-bold">
-                    {isEnglish
-                      ? "Submission Successful!"
-                      : "সফলভাবে জমা দেওয়া হয়েছে!"}
-                  </h2>
-                  <p className="">
-                    <p>Last Submission Date: </p>
-                    <span className="font-bold">
-                      {new Date(phase?.end_date).toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <p className="text-sm font-medium">
-                      Total Outlet:{" "}
-                      <span className="font-bold">
-                        {Number(totalOutlets || 0) || 0}
-                      </span>
-                    </p>
-                    <div className="w-1 self-stretch bg-border" />
-                    <p className="text-sm font-medium">
-                      Completed:{" "}
-                      <span className="font-bold">
-                        {phase?.completed_outlets + 1 || 0}
-                      </span>
-                    </p>
-                    <div className="w-1 self-stretch bg-border" />
-                    <p className="text-sm font-medium">
-                      Incomplete:{" "}
-                      <span className="font-bold">
-                        {Number(totalOutlets || 0) -
-                          (phase?.completed_outlets + 1 || 0)}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-                <Button onClick={() => navigate(-1)}>
-                  {isEnglish ? "Return to Dashboard" : "ড্যাশবোর্ডে ফিরে যান"}
-                </Button>
-              </div>
-            </div>
+            <SuccessModal
+              {...{
+                isEnglish,
+                phase,
+                totalOutlets,
+                navigate,
+              }}
+            />
           )}
         </div>
       </section>
     </main>
   );
 };
+
+const SuccessModal = ({ isEnglish, phase, totalOutlets, navigate }) => (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="rounded-lg bg-white p-8 text-center">
+      <div className="mb-4">
+        <Check className="mx-auto mb-4 text-green-500" size={40} />
+        <h2 className="mb-2 text-xl font-bold">
+          {isEnglish ? "Submission Successful!" : "সফলভাবে জমা দেওয়া হয়েছে!"}
+        </h2>
+        <p>
+          <p>Last Submission Date: </p>
+          <span className="font-bold">
+            {new Date(phase?.end_date).toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </span>
+        </p>
+        <div className="mt-2 flex items-center gap-2">
+          <p className="text-sm font-medium">
+            Total Outlet: <span className="font-bold">{totalOutlets || 0}</span>
+          </p>
+          <div className="w-1 self-stretch bg-border" />
+          <p className="text-sm font-medium">
+            Completed:{" "}
+            <span className="font-bold">
+              {phase?.completed_outlets + 1 || 0}
+            </span>
+          </p>
+          <div className="w-1 self-stretch bg-border" />
+          <p className="text-sm font-medium">
+            Incomplete:{" "}
+            <span className="font-bold">
+              {(totalOutlets || 0) - (phase?.completed_outlets + 1 || 0)}
+            </span>
+          </p>
+        </div>
+      </div>
+      <Button onClick={() => navigate(-1)}>
+        {isEnglish ? "Return to Dashboard" : "ড্যাশবোর্ডে ফিরে যান"}
+      </Button>
+    </div>
+  </div>
+);
 
 export default OutletSurveyQuestionsPage;
