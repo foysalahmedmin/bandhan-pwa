@@ -212,6 +212,17 @@ const Question = ({
           />
         )}
 
+        {question.input_type === "email" && (
+          <FormControl
+            name={`question-${question.serial}`}
+            type="email"
+            value={question.value || ""}
+            onChange={(e) => handleValueChange(e.target.value)}
+            required={isRequired}
+            placeholder={isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"}
+          />
+        )}
+
         {question.input_type === "number" && (
           <FormControl
             name={`question-${question.serial}`}
