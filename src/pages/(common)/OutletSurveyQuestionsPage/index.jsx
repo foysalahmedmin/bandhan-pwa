@@ -42,7 +42,7 @@ const Question = ({
   }, [question.dependencies, questions]);
 
   const isVisible = !question.isDependent || dependenciesSatisfied;
-  const isRequired = question.isRequired && dependenciesSatisfied;
+  const isRequired = question.isRequired;
 
   const question_text = question?.question?.replace(
     /{{\s*([\w.]+)\s*}}/g,
@@ -189,6 +189,7 @@ const Question = ({
       <div className="space-y-2">
         {question.input_type === "text" && (
           <FormControl
+            name={`question-${question.serial}`}
             type="text"
             value={question.value || ""}
             onChange={(e) => handleValueChange(e.target.value)}
@@ -196,8 +197,10 @@ const Question = ({
             placeholder={isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"}
           />
         )}
+
         {question.input_type === "textarea" && (
           <FormControl
+            name={`question-${question.serial}`}
             as="textarea"
             type="text"
             rows={4}
@@ -208,8 +211,10 @@ const Question = ({
             placeholder={isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"}
           />
         )}
+
         {question.input_type === "number" && (
           <FormControl
+            name={`question-${question.serial}`}
             type="number"
             value={question.value || ""}
             onChange={(e) => handleValueChange(Number(e.target.value))}
@@ -237,10 +242,12 @@ const Question = ({
             placeholder={isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন"}
           />
         )}
+
         {question.input_type === "number-range" && (
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <FormControl
+                name={`question-${question.serial}-start-number`}
                 type="number"
                 value={
                   Array.isArray(question.value) ? question.value[0] || "" : ""
@@ -271,6 +278,7 @@ const Question = ({
               />
               <span className="text-gray-500">{isEnglish ? "to" : "থেকে"}</span>
               <FormControl
+                name={`question-${question.serial}-end-number`}
                 type="number"
                 value={
                   Array.isArray(question.value) ? question.value[1] || "" : ""
@@ -305,6 +313,7 @@ const Question = ({
 
         {question.input_type === "date" && (
           <FormControl
+            name={`question-${question.serial}`}
             type={"date"}
             value={
               question.value
@@ -321,6 +330,7 @@ const Question = ({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <FormControl
+                name={`question-${question.serial}-start-date`}
                 type="date"
                 value={
                   Array.isArray(question.value) && question.value[0]
@@ -333,6 +343,7 @@ const Question = ({
               />
               <span className="text-gray-500">{isEnglish ? "to" : "থেকে"}</span>
               <FormControl
+                name={`question-${question.serial}-end-date`}
                 type="date"
                 value={
                   Array.isArray(question.value) && question.value[1]
@@ -352,8 +363,10 @@ const Question = ({
             {question.options?.map((option) => (
               <label key={option.value} className="flex items-center gap-2">
                 <Radio
+                  name={`question-${question.serial}`}
                   checked={question.value === option.value}
                   onChange={() => handleValueChange(option.value)}
+                  required={!question?.value && isRequired}
                 />
                 <span>{option.label}</span>
               </label>
@@ -366,6 +379,7 @@ const Question = ({
             {question.options?.map((option) => (
               <label key={option.value} className="flex items-center gap-2">
                 <Checkbox
+                  name={`question-${question.serial}`}
                   checked={question.value?.includes(option.value)}
                   onChange={(e) => {
                     const newValue = e.target.checked
@@ -375,6 +389,7 @@ const Question = ({
                         );
                     handleValueChange(newValue);
                   }}
+                  required={!(question?.value?.length > 0) && isRequired}
                 />
                 <span>{option.label}</span>
               </label>
@@ -384,6 +399,7 @@ const Question = ({
 
         {question.input_type === "select" && (
           <FormControl
+            name={`question-${question.serial}`}
             as="select"
             className="w-full rounded border p-2"
             value={question.value || ""}
