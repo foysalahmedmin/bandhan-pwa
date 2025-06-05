@@ -15,6 +15,18 @@ import { useLocation, useNavigate } from "react-router-dom";
 // ==============================
 // Helper Functions
 // ==============================
+const isNumeric = (value) => {
+  return !isNaN(value) && !isNaN(parseFloat(value));
+};
+function isSubset(d1, d2) {
+  const d2qs = new Set(d2.map((item) => item.question));
+  return d1.every((item) => d2qs.has(item.question));
+}
+const interpolateText = (text, data) => {
+  return text?.replace(/{{\s*([\w.]+)\s*}}/g, (_, path) => {
+    return path.split(".").reduce((obj, key) => obj?.[key], data) ?? "";
+  });
+};
 const processQuestionValue = (question, value) => {
   switch (question.input_type) {
     case "text":
@@ -67,13 +79,7 @@ const processQuestionValue = (question, value) => {
   }
 };
 
-const interpolateText = (text, data) => {
-  return text?.replace(/{{\s*([\w.]+)\s*}}/g, (_, path) => {
-    return path.split(".").reduce((obj, key) => obj?.[key], data) ?? "";
-  });
-};
-
-const useDependenciesSatisfied = (dependencies, questions) => {
+const useSequenceDependenciesSatisfied = (dependencies, questions) => {
   return useMemo(() => {
     return (
       dependencies?.some((dep) => {
@@ -94,6 +100,58 @@ const useDependenciesSatisfied = (dependencies, questions) => {
       }) ?? false
     );
   }, [dependencies, questions]);
+};
+
+const useGroupQuestions = (question, questions) => {
+  const [groupQuestions, setGroupQuestions] = useState([]);
+
+  useEffect(() => {
+    if (
+      !question?.value ||
+      (!isNumeric(question?.value) && !Array.isArray(question?.value))
+    ) {
+      setGroupQuestions([]);
+      return;
+    }
+
+    if (question?.question_group_logics?.length > 0) {
+      const groupChunk = questions?.filter((q) =>
+        question?.question_group_logics?.some((d) => {
+          if (d?.depended_question === q?._id && d?.value === "{{anything}}") {
+            return true;
+          }
+
+          if (d?.depended_question === q?._id && d?.value === question?.value) {
+            return true;
+          }
+
+          if (
+            d?.depended_question === q?._id &&
+            Array.isArray(question?.value)
+          ) {
+            return question?.value.includes(d?.value);
+          }
+        }),
+      );
+
+      if (isNumeric(question?.value)) {
+        const count = Number(question.value);
+        const chunks = Array.from({ length: count }, (_, i) => ({
+          key: i + 1,
+          questions: groupChunk ?? [],
+        }));
+        setGroupQuestions(chunks);
+      } else if (Array.isArray(question?.value)) {
+        const chunks = question.value.map((item) => ({
+          key: item,
+          questions: groupChunk ?? [],
+        }));
+        setGroupQuestions(chunks);
+      }
+    }
+  }, [question, questions]);
+
+  return groupQuestions;
 };
 
 // ==============================
@@ -279,17 +337,26 @@ const QuestionInput = ({
 // ==============================
 // Question Components
 // ==============================
-const BaseQuestion = ({ question, questions, data, onValueChange }) => {
+const BaseQuestion = ({
+  question,
+  valuelessQuestions,
+  questions,
+  data,
+  onValueChange,
+}) => {
   const { isEnglish } = useLanguageState();
-  const [groupQuestions, setGroupQuestions] = useState([]);
-  const dependenciesSatisfied = useDependenciesSatisfied(
+  const dependenciesSatisfied = useSequenceDependenciesSatisfied(
     question.dependencies,
     questions,
   );
+  const groupQuestions = useGroupQuestions(question, valuelessQuestions);
 
   const isVisible = useMemo(() => {
-    const hasDependencies = question.isDependent && !dependenciesSatisfied;
-    const hasBaseDependencies = question.base_dependencies?.length > 0;
+    const hasDependencies =
+      question.isSequenceDependent && !dependenciesSatisfied;
+    const hasBaseDependencies =
+      question?.isGroupDependent &&
+      isSubset(question?.sequence_dependencies, question?.group_dependencies);
     return !hasDependencies && !hasBaseDependencies;
   }, [question, dependenciesSatisfied]);
 
@@ -297,15 +364,6 @@ const BaseQuestion = ({ question, questions, data, onValueChange }) => {
     () => interpolateText(question.question, data),
     [question.question, data],
   );
-
-  useEffect(() => {
-    if (question.value && question.base_group_dependencies?.length > 0) {
-      const groupChunk = questions.filter((q) =>
-        question.base_group_dependencies.some((d) => d.question === q._id),
-      );
-      setGroupQuestions(Array(question.value).fill(groupChunk));
-    }
-  }, [question, questions]);
 
   const name = `question-${question.serial}`;
 
@@ -344,11 +402,11 @@ const BaseQuestion = ({ question, questions, data, onValueChange }) => {
         <div className="space-y-6 border border-primary p-4">
           {groupQuestions.map((gq, idx) => (
             <GroupQuestionsChunk
-              key={idx}
+              key={gq.key}
               baseIndex={question._id}
               index={idx}
               question={question}
-              questions={gq}
+              questions={gq?.questions ?? []}
               data={data}
             />
           ))}
@@ -359,6 +417,7 @@ const BaseQuestion = ({ question, questions, data, onValueChange }) => {
 };
 
 const GroupQuestion = ({
+  baseQuestion,
   question,
   baseIndex,
   groupIndex,
@@ -368,16 +427,14 @@ const GroupQuestion = ({
   data,
 }) => {
   const { isEnglish } = useLanguageState();
-  const dependenciesSatisfied = useDependenciesSatisfied(
+  const dependenciesSatisfied = useSequenceDependenciesSatisfied(
     question.dependencies,
-    questions,
+    [baseQuestion, ...questions],
   );
 
   const isVisible = useMemo(() => {
-    const isFirstInGroup =
-      question.base_dependencies?.length > 0 && index === 0;
-    return !question.isDependent || dependenciesSatisfied || isFirstInGroup;
-  }, [question, dependenciesSatisfied, index]);
+    return !question.isSequenceDependent || dependenciesSatisfied;
+  }, [question, dependenciesSatisfied]);
 
   const questionText = useMemo(
     () => interpolateText(question.question, data),
@@ -395,7 +452,7 @@ const GroupQuestion = ({
   return (
     <div
       className={cn("mb-6 rounded-lg p-4", {
-        "border-l-4 border-l-primary/15 pl-3": question.isDependent,
+        "border-l-4 border-l-primary/15 pl-3": question.isSequenceDependent,
       })}
     >
       <div className="mb-3">
@@ -423,6 +480,7 @@ const GroupQuestion = ({
 const GroupQuestionsChunk = ({
   baseIndex,
   index,
+  key,
   question,
   questions: initialQuestions,
   data,
@@ -440,21 +498,18 @@ const GroupQuestionsChunk = ({
   return (
     <div className="bg-primary/10 p-2">
       <p className="mb-4 text-lg font-semibold text-primary">
-        {getOrdinal(index + 1)}.{" "}
-        {question?.serial === 5
-          ? "ছেলে সন্তানের তথ্য:"
-          : question?.serial === 6
-            ? "মেয়ে সন্তানের তথ্য:"
-            : "তথ্য গ্রুপ:"}{" "}
-        {`প্রসঙ্গত প্রশ্ন (${question?.serial})`}
+        {question?.input_type === "number" ? getOrdinal(index + 1) : key}.{" "}
+        {`তথ্য গ্রুপ: প্রসঙ্গত প্রশ্ন (${question?.serial})`}
       </p>
       <div className="space-y-4">
         {questions.map((q, i) => (
           <GroupQuestion
             key={i}
+            baseQuestion={question}
             question={q}
             baseIndex={baseIndex}
             groupIndex={index}
+            groupKey={key}
             index={i}
             onValueChange={handleValueUpdate}
             questions={questions}
@@ -475,6 +530,7 @@ const OutletSurveyQuestionsPage = () => {
   const { user, userInfo } = useAuthenticationState();
   const { isEnglish } = useLanguageState();
 
+  const [valuelessQuestions, setValuelessQuestions] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [successModal, setSuccessModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -513,6 +569,7 @@ const OutletSurveyQuestionsPage = () => {
           }) || [];
 
         setQuestions(mergedQuestions);
+        setValuelessQuestions(mergedQuestions);
       } catch (error) {
         console.error("Error fetching surveys:", error);
       } finally {
@@ -618,6 +675,7 @@ const OutletSurveyQuestionsPage = () => {
                   key={question._id}
                   question={question}
                   index={index}
+                  valuelessQuestions={valuelessQuestions}
                   questions={questions}
                   data={data}
                   onValueChange={(value) => handleValueUpdate(value, index)}
