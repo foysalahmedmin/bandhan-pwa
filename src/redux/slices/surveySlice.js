@@ -33,7 +33,7 @@ export const fetchSurveyData = createAsyncThunk(
 
       // First, collect group questions and group answers
       surveys.forEach((s) => {
-        if (s.isGroupQuestion) {
+        if (s.isGroupDependent) {
           const groupId = `${s.group_base_question}_${s.group_index}`;
           if (!groupMap[groupId]) {
             groupMap[groupId] = {
@@ -61,7 +61,7 @@ export const fetchSurveyData = createAsyncThunk(
       const mergedQuestions =
         phase?.questions?.map((q) => {
           const found = surveys.find(
-            (s) => s.question._id === q._id && !s.isGroupQuestion,
+            (s) => s.question._id === q._id && !s.isGroupDependent,
           );
           const groupEntries = groupedById[q._id];
 
@@ -144,7 +144,7 @@ export const submitSurvey = createAsyncThunk(
                   if (gq.value !== undefined && gq.value !== null) {
                     finalPayload.push(
                       getItem(gq, {
-                        isGroupQuestion: true,
+                        isGroupDependent: true,
                         group_base_question,
                         group_base_value,
                         group_key,
