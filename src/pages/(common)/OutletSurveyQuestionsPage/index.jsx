@@ -18,15 +18,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 const isNumeric = (value) => {
   return !isNaN(value) && !isNaN(parseFloat(value));
 };
-function isSubset(d1, d2) {
-  const d2qs = new Set(d2.map((item) => item.question));
-  return d1.every((item) => d2qs.has(item.question));
-}
+
 const interpolateText = (text, data) => {
   return text?.replace(/{{\s*([\w.]+)\s*}}/g, (_, path) => {
     return path.split(".").reduce((obj, key) => obj?.[key], data) ?? "";
   });
 };
+
 const processQuestionValue = (question, value) => {
   switch (question.input_type) {
     case "text":
@@ -194,18 +192,20 @@ const RangeInput = ({
   );
 };
 
-const OptionInput = ({ question, value, onChange, isRequired, type }) => (
+const OptionInput = ({ question, name, value, onChange, isRequired, type }) => (
   <div className="space-y-2">
     {question.options?.map((option) => (
       <label key={option.value} className="flex items-center gap-2">
         {type === "radio" ? (
           <Radio
+            name={name}
             checked={value === option.value}
             onChange={() => onChange(option.value)}
             required={!value && isRequired}
           />
         ) : (
           <Checkbox
+            name={name}
             checked={value?.includes(option.value)}
             onChange={(e) => {
               const newValue = e.target.checked
@@ -300,6 +300,7 @@ const QuestionInput = ({
     case "checkbox":
       return (
         <OptionInput
+          name={name}
           question={question}
           value={value}
           onChange={onChange}
@@ -354,9 +355,7 @@ const BaseQuestion = ({
   const isVisible = useMemo(() => {
     const hasDependencies =
       question.isSequenceDependent && !dependenciesSatisfied;
-    const hasBaseDependencies =
-      question?.isGroupDependent &&
-      isSubset(question?.sequence_dependencies, question?.group_dependencies);
+    const hasBaseDependencies = question?.isGroupDependent;
     return !hasDependencies && !hasBaseDependencies;
   }, [question, dependenciesSatisfied]);
 
@@ -532,7 +531,7 @@ const OutletSurveyQuestionsPage = () => {
 
   const [valuelessQuestions, setValuelessQuestions] = useState([]);
   const [questions, setQuestions] = useState([]);
-  const [successModal, setSuccessModal] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const { totalOutlets, outlet, phase } = state || {};
@@ -610,7 +609,7 @@ const OutletSurveyQuestionsPage = () => {
         { headers: { Authorization: user } },
       );
 
-      setSuccessModal(true);
+      setIsSuccessModalOpen(true);
     } catch (error) {
       console.error("Submission error:", error);
       alert(isEnglish ? "Submission failed" : "জমা দেওয়া ব্যর্থ হয়েছে");
@@ -696,7 +695,7 @@ const OutletSurveyQuestionsPage = () => {
             </div>
           </form>
 
-          {successModal && (
+          {isSuccessModalOpen && (
             <SuccessModal
               {...{
                 isEnglish,
