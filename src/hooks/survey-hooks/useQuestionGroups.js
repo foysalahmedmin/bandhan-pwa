@@ -12,7 +12,7 @@ export const useQuestionGroups = (question, questions) => {
 
     if (!question?.question_group_logics?.length) return [];
 
-    const groupChunk =
+    const group =
       questions?.filter((q) =>
         question.question_group_logics.some((d) => {
           if (d?.depended_question === q?._id && d?.value === "{{anything}}")
@@ -36,7 +36,7 @@ export const useQuestionGroups = (question, questions) => {
         group_base_value: question.value,
         group_key: i + 1,
         group_index: i,
-        group_questions: groupChunk,
+        group_questions: group,
       }));
     }
 
@@ -46,7 +46,7 @@ export const useQuestionGroups = (question, questions) => {
         group_base_value: question.value,
         group_key: item,
         group_index: i,
-        group_questions: groupChunk,
+        group_questions: group,
       }));
     }
 
