@@ -23,8 +23,6 @@ const Groups = React.memo(({ data, indexes, index, group }) => {
     return `${prefix}. তথ্য গ্রুপ: প্রসঙ্গত প্রশ্ন (${baseQuestionState?.serial})`;
   }, [baseQuestionState, group_key, index]);
 
-  // console.log(baseQuestionState);
-
   return (
     <div className="rounded-lg bg-primary/10 p-2">
       <p className="mb-4 text-lg font-semibold text-primary">{title}</p>
