@@ -2,7 +2,7 @@ import { isNumeric } from "@/utils/surveyUtils";
 import { useMemo } from "react";
 
 export const useQuestionGroups = (info, questions) => {
-  const { _id, value, group_values } = info || {};
+  const { _id, group_values, value } = info || {};
   return useMemo(() => {
     if (!value || (!isNumeric(value) && !Array.isArray(value))) {
       return [];
@@ -25,7 +25,7 @@ export const useQuestionGroups = (info, questions) => {
       ) || [];
 
     if (isNumeric(value)) {
-      const count = Number(value);
+      const count = Math.floor(Number(value));
       return Array.from({ length: count }, (_, i) => ({
         group_base_question: _id,
         group_base_value: value,
@@ -46,5 +46,5 @@ export const useQuestionGroups = (info, questions) => {
     }
 
     return [];
-  }, [_id, value, group_values, questions]);
+  }, [_id, group_values, value, questions]);
 };

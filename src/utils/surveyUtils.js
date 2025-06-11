@@ -7,6 +7,17 @@ export const interpolateText = (text, data) => {
   });
 };
 
+export const formatDateForInput = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (isNaN(date)) return "";
+
+  const offset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - offset * 60000);
+
+  return local.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:mm"
+};
+
 export const processQuestionValue = (info, value) => {
   const {
     input_type,
@@ -42,10 +53,10 @@ export const processQuestionValue = (info, value) => {
         ? [Number(value[0]), Number(value[1])]
         : value;
     case "date":
-      return new Date(value).toISOString();
+      return new Date(value);
     case "date-range":
       return Array.isArray(value)
-        ? [new Date(value[0]).toISOString(), new Date(value[1]).toISOString()]
+        ? [new Date(value[0]), new Date(value[1])]
         : value;
     case "checkbox":
       return Array.isArray(value) ? value : [value];

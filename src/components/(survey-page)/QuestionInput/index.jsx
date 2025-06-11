@@ -1,6 +1,7 @@
 import { Checkbox } from "@/components/ui/Checkbox";
 import { FormControl } from "@/components/ui/FormControl";
 import { Radio } from "@/components/ui/Radio";
+import { formatDateForInput } from "@/utils/surveyUtils";
 import React from "react";
 
 const RangeInput = React.memo(
@@ -11,34 +12,74 @@ const RangeInput = React.memo(
       onChange(current);
     };
 
-    const inputType = question.input_type === "date-range" ? "date" : "number";
     const startPlaceholder = isEnglish ? "Start value" : "শুরুর মান";
     const endPlaceholder = isEnglish ? "End value" : "শেষ মান";
     const separatorText = isEnglish ? "to" : "থেকে";
 
-    return (
-      <div className="flex items-center gap-2">
-        <FormControl
-          name={`${prefix}-start`}
-          type={inputType}
-          value={Array.isArray(value) ? value[0] || "" : ""}
-          onChange={(e) => handleChange(e.target.value, true)}
-          step={question?.step || 1}
-          required={isRequired}
-          placeholder={startPlaceholder}
-        />
-        <span className="text-gray-500">{separatorText}</span>
-        <FormControl
-          name={`${prefix}-end`}
-          type={inputType}
-          value={Array.isArray(value) ? value[1] || "" : ""}
-          onChange={(e) => handleChange(e.target.value, false)}
-          step={question?.step || 1}
-          required={isRequired}
-          placeholder={endPlaceholder}
-        />
-      </div>
-    );
+    const renderRangeInput = () => {
+      switch (question.input_type) {
+        case "number-range":
+          return (
+            <div className="flex items-center gap-2">
+              <FormControl
+                name={`${prefix}-start`}
+                type="number"
+                value={Array.isArray(value) ? value[0] || "" : ""}
+                onChange={(e) => handleChange(e.target.value, true)}
+                step={question?.step || "any"}
+                required={isRequired}
+                placeholder={startPlaceholder}
+              />
+              <span className="text-gray-500">{separatorText}</span>
+              <FormControl
+                name={`${prefix}-end`}
+                type="number"
+                value={Array.isArray(value) ? value[1] || "" : ""}
+                onChange={(e) => handleChange(e.target.value, false)}
+                step={question?.step || "any"}
+                required={isRequired}
+                placeholder={endPlaceholder}
+              />
+            </div>
+          );
+
+        case "date-range":
+          return (
+            <div className="flex items-center gap-2">
+              <FormControl
+                name={`${prefix}-start`}
+                type="datetime-local"
+                value={
+                  Array.isArray(value)
+                    ? formatDateForInput(value?.[0]) || ""
+                    : ""
+                }
+                onChange={(e) => handleChange(e.target.value, true)}
+                required={isRequired}
+                placeholder={startPlaceholder}
+              />
+              <span className="text-gray-500">{separatorText}</span>
+              <FormControl
+                name={`${prefix}-end`}
+                type="datetime-local"
+                value={
+                  Array.isArray(value)
+                    ? formatDateForInput(value?.[1]) || ""
+                    : ""
+                }
+                onChange={(e) => handleChange(e.target.value, false)}
+                required={isRequired}
+                placeholder={endPlaceholder}
+              />
+            </div>
+          );
+
+        default:
+          return null;
+      }
+    };
+
+    return renderRangeInput();
   },
 );
 RangeInput.displayName = "RangeInput";
@@ -81,7 +122,7 @@ const QuestionInput = React.memo(
     const placeholder = isEnglish ? "Enter your answer" : "আপনার উত্তর লিখুন";
 
     const commonProps = {
-      value: value || "",
+      value: value ?? "",
       onChange: (e) => onChange(e.target.value),
       required: isRequired,
       placeholder,
@@ -89,6 +130,7 @@ const QuestionInput = React.memo(
 
     const handleNumberInput = (e) => {
       const numValue = Number(e.target.value);
+      if (isNaN(numValue) || e.target.value === "") e.target.value = "";
       if (question.max_value && numValue > question.max_value) {
         e.target.value = question.max_value;
       }
@@ -100,6 +142,7 @@ const QuestionInput = React.memo(
     switch (question.input_type) {
       case "text":
       case "email":
+      case "tel":
         return (
           <FormControl
             name={name}
@@ -125,7 +168,7 @@ const QuestionInput = React.memo(
             name={name}
             type="number"
             {...commonProps}
-            step={question?.step || 1}
+            step={question?.step || "any"}
             onInput={handleNumberInput}
           />
         );
@@ -144,12 +187,11 @@ const QuestionInput = React.memo(
         );
 
       case "date":
-      case "datetime-local":
         return (
           <FormControl
             name={name}
-            type={question.input_type}
-            value={value ? new Date(value).toISOString().split("T")[0] : ""}
+            type="datetime-local"
+            value={value ? formatDateForInput(value) : ""}
             {...commonProps}
           />
         );
