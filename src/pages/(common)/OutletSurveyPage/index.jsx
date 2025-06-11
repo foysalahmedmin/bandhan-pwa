@@ -27,6 +27,8 @@ const OutletSurveyPage = () => {
 
   const [phases, setPhase] = useState([]);
 
+  console.log("phases", phases);
+
   useLayoutEffect(() => {
     if (userInfo.outletCode) {
       setOutlets(userInfo.outletCode);

@@ -5,7 +5,7 @@ import axios from "axios";
 // Async thunks
 export const fetchSurveyData = createAsyncThunk(
   "survey/fetchSurveyData",
-  async ({ phaseId, outletId, user, phase }, { rejectWithValue }) => {
+  async ({ phaseId, outletId, user, questions }, { rejectWithValue }) => {
     try {
       const { data } = await axios.get(
         `${URLS.baseURL}/api/outlet-survey/get-surveys`,
@@ -30,6 +30,12 @@ export const fetchSurveyData = createAsyncThunk(
       };
 
       const groupMap = {};
+
+      if (!surveys.length)
+        return {
+          questions: questions || [],
+          initialQuestions: questions || [],
+        };
 
       // First, collect group questions and group answers
       surveys.forEach((s) => {
@@ -59,7 +65,7 @@ export const fetchSurveyData = createAsyncThunk(
       }, {});
 
       const mergedQuestions =
-        phase?.questions?.map((q) => {
+        questions?.map((q) => {
           const found = surveys.find(
             (s) => s.question._id === q._id && !s.isGroupDependent,
           );
@@ -74,11 +80,23 @@ export const fetchSurveyData = createAsyncThunk(
           };
         }) || [];
 
-      return mergedQuestions;
+      if (!mergedQuestions.length) {
+        return {
+          questions: mergedQuestions || [],
+          initialQuestions: questions || [],
+        };
+      } else {
+        return {
+          questions: questions || [],
+          initialQuestions: questions || [],
+        };
+      }
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || "Failed to fetch survey data",
-      );
+      return rejectWithValue({
+        questions: questions || [],
+        initialQuestions: questions || [],
+        error: error?.response?.data || error.message || error,
+      });
     }
   },
 );
@@ -246,12 +264,14 @@ export const surveySlice = createSlice({
       })
       .addCase(fetchSurveyData.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.questions = action.payload;
-        state.initialQuestions = action.payload;
+        state.questions = action.payload.questions;
+        state.initialQuestions = action.payload.initialQuestions;
       })
       .addCase(fetchSurveyData.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload;
+        state.questions = action.payload.questions;
+        state.initialQuestions = action.payload.initialQuestions;
+        state.error = action.payload?.error;
       })
       // Submit survey
       .addCase(submitSurvey.pending, (state) => {

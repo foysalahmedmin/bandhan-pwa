@@ -114,6 +114,8 @@ const OptimizedOutletSurveyQuestionsPage = () => {
   const { questions, isLoading, isSubmitting, isSuccessModalOpen, error } =
     useSelector((state) => state.survey);
 
+  console.log("questions", questions, isLoading);
+
   const { totalOutlets, outlet, phase } = state || {};
   const phaseId = phase?._id;
   const outletId = outlet?._id;
