@@ -224,13 +224,13 @@ export const surveySlice = createSlice({
   reducers: {
     setQuestionGroups: (state, action) => {
       const { index, groups } = action.payload;
-      if (state.questions[index]) {
+      if (state.questions?.[index]) {
         state.questions[index].groups = groups;
       }
     },
     updateQuestionValue: (state, action) => {
       const { index, value } = action.payload;
-      if (state.questions[index]) {
+      if (state.questions?.[index]) {
         state.questions[index].value = value;
       }
     },

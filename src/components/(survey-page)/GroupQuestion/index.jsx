@@ -3,19 +3,21 @@ import { useDependenciesSatisfied } from "@/hooks/survey-hooks/useDependenciesSa
 import { cn } from "@/lib/utils";
 import { updateGroupQuestionValue } from "@/redux/slices/surveySlice";
 import { interpolateText, processQuestionValue } from "@/utils/surveyUtils";
-import React from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import QuestionInput from "../QuestionInput";
 
 const GroupQuestion = React.memo(({ question, indexes, data }) => {
   const {
-    input_type,
+    isRequired,
     isTextOnly,
     isAllowSpecialCharacter,
     max_length,
     min_value,
     max_value,
-  } = question;
+    input_type,
+    sequence_dependencies,
+  } = question || {};
   const dispatch = useDispatch();
   const { isEnglish } = useLanguageState();
   const { questions } = useSelector((state) => state.survey);
@@ -28,8 +30,12 @@ const GroupQuestion = React.memo(({ question, indexes, data }) => {
     return baseQuestionState?.groups?.[indexes[1]] || {};
   }, [baseQuestionState, indexes]);
 
+  const { value } = React.useMemo(() => {
+    return groupState?.group_questions?.[indexes[2]] || {};
+  }, [groupState, indexes]);
+
   const dependenciesSatisfied = useDependenciesSatisfied(
-    question.sequence_dependencies,
+    sequence_dependencies,
     [baseQuestionState, ...(groupState?.group_questions || [])],
     [baseQuestionState],
   );
@@ -75,6 +81,17 @@ const GroupQuestion = React.memo(({ question, indexes, data }) => {
     ],
   );
 
+  useEffect(() => {
+    if (!isVisible && !!value) {
+      dispatch(
+        updateGroupQuestionValue({
+          indexes,
+          value: "",
+        }),
+      );
+    }
+  }, [dispatch, indexes, value, isVisible]);
+
   if (!isVisible) return null;
 
   const name = `question-${baseQuestionState.serial}-${groupState.key}-${question.serial}-${indexes.join("-")}`;
@@ -97,9 +114,9 @@ const GroupQuestion = React.memo(({ question, indexes, data }) => {
 
       <QuestionInput
         question={question}
-        value={question.value}
+        value={value}
         onChange={handleValueChange}
-        isRequired={question.isRequired}
+        isRequired={isRequired}
         isEnglish={isEnglish}
         name={name}
       />

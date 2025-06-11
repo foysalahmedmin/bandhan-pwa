@@ -17,39 +17,30 @@ import QuestionInput from "../QuestionInput";
 
 const BaseQuestion = React.memo(({ question, index, data }) => {
   const {
-    input_type,
+    _id,
+    isRequired,
     isTextOnly,
     isAllowSpecialCharacter,
     max_length,
     min_value,
     max_value,
-  } = question;
+    input_type,
+    sequence_dependencies,
+    group_values,
+  } = question || {};
+
   const dispatch = useDispatch();
   const { isEnglish } = useLanguageState();
   const { questions, initialQuestions } = useSelector((state) => state.survey);
 
+  const { value, groups } = React.useMemo(() => {
+    return questions?.[index] || {};
+  }, [questions, index]);
+
   const dependenciesSatisfied = useDependenciesSatisfied(
-    question.sequence_dependencies,
+    sequence_dependencies,
     questions,
   );
-
-  const {
-    _id,
-    value,
-    group_values,
-    groups: initial_groups,
-  } = questions?.[index] || {};
-
-  const groups = useQuestionGroups(
-    { _id, value, group_values },
-    initialQuestions,
-  );
-
-  useEffect(() => {
-    if (!areGroupsEqual(question.groups, groups)) {
-      dispatch(setQuestionGroups({ index, groups }));
-    }
-  }, [index, groups, dispatch]);
 
   const isVisible = React.useMemo(() => {
     const hasSequenceDependencies =
@@ -90,9 +81,26 @@ const BaseQuestion = React.memo(({ question, index, data }) => {
     ],
   );
 
+  const initialGroups = useQuestionGroups(
+    { _id, group_values, value },
+    initialQuestions,
+  );
+
+  useEffect(() => {
+    if (!areGroupsEqual(groups, initialGroups)) {
+      dispatch(setQuestionGroups({ index, groups: initialGroups }));
+    }
+  }, [index, initialGroups, dispatch]);
+
+  useEffect(() => {
+    if (!isVisible && !!value) {
+      dispatch(updateQuestionValue({ index, value: "" }));
+    }
+  }, [dispatch, index, value, isVisible]);
+
   if (!isVisible) return null;
 
-  const name = `question-${question.serial}-${index}`;
+  const name = `question-${question?.serial}-${index}`;
 
   return (
     <div className="mb-6 space-y-4 rounded-lg p-4">
@@ -111,17 +119,17 @@ const BaseQuestion = React.memo(({ question, index, data }) => {
 
         <QuestionInput
           question={question}
-          value={question.value}
+          value={value}
           onChange={handleValueChange}
-          isRequired={question.isRequired}
+          isRequired={isRequired}
           isEnglish={isEnglish}
           name={name}
         />
       </div>
 
-      {question?.value && initial_groups?.length > 0 && (
+      {question?.value && initialGroups?.length > 0 && (
         <div className="space-y-6 border border-primary p-4">
-          {initial_groups?.map((g, idx) => (
+          {initialGroups?.map((g, idx) => (
             <Groups
               key={[index, idx].join("-")}
               data={data}

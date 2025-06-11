@@ -111,8 +111,14 @@ const OptimizedOutletSurveyQuestionsPage = () => {
   const { user, userInfo } = useAuthenticationState();
   const { isEnglish } = useLanguageState();
 
-  const { questions, isLoading, isSubmitting, isSuccessModalOpen, error } =
-    useSelector((state) => state.survey);
+  const {
+    questions,
+    initialQuestions,
+    isLoading,
+    isSubmitting,
+    isSuccessModalOpen,
+    error,
+  } = useSelector((state) => state.survey);
 
   const { totalOutlets, outlet, phase } = state || {};
   const phaseId = phase?._id;
@@ -129,7 +135,7 @@ const OptimizedOutletSurveyQuestionsPage = () => {
           phaseId,
           outletId,
           user,
-          questions: phase.questions,
+          questions: phase?.questions || [],
         }),
       );
     }
@@ -194,7 +200,7 @@ const OptimizedOutletSurveyQuestionsPage = () => {
 
           <form onSubmit={handleSubmit}>
             <div className="border border-primary p-2">
-              {questions.map((question, index) => (
+              {initialQuestions.map((question, index) => (
                 <BaseQuestion
                   key={question._id}
                   question={question}

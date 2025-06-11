@@ -23,6 +23,7 @@ const RangeInput = React.memo(
           type={inputType}
           value={Array.isArray(value) ? value[0] || "" : ""}
           onChange={(e) => handleChange(e.target.value, true)}
+          step={question?.step || 1}
           required={isRequired}
           placeholder={startPlaceholder}
         />
@@ -32,6 +33,7 @@ const RangeInput = React.memo(
           type={inputType}
           value={Array.isArray(value) ? value[1] || "" : ""}
           onChange={(e) => handleChange(e.target.value, false)}
+          step={question?.step || 1}
           required={isRequired}
           placeholder={endPlaceholder}
         />
@@ -123,6 +125,7 @@ const QuestionInput = React.memo(
             name={name}
             type="number"
             {...commonProps}
+            step={question?.step || 1}
             onInput={handleNumberInput}
           />
         );
