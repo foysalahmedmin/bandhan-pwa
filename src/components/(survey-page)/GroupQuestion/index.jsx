@@ -20,17 +20,18 @@ const GroupQuestion = React.memo(({ question, indexes, data }) => {
   const { isEnglish } = useLanguageState();
   const { questions } = useSelector((state) => state.survey);
 
-  const baseQuestion = React.useMemo(() => {
-    return questions[indexes[0]] || {};
+  const baseQuestionState = React.useMemo(() => {
+    return questions?.[indexes[0]] || {};
   }, [questions, indexes]);
 
-  const group = React.useMemo(() => {
-    return baseQuestion?.groups?.[indexes[1]] || {};
-  }, [baseQuestion, indexes]);
+  const groupState = React.useMemo(() => {
+    return baseQuestionState?.groups?.[indexes[1]] || {};
+  }, [baseQuestionState, indexes]);
 
   const dependenciesSatisfied = useDependenciesSatisfied(
-    question.dependencies,
-    [baseQuestion, ...group.questions],
+    question.sequence_dependencies,
+    [baseQuestionState, ...(groupState?.group_questions || [])],
+    [baseQuestionState],
   );
 
   const isVisible = React.useMemo(() => {
@@ -76,7 +77,7 @@ const GroupQuestion = React.memo(({ question, indexes, data }) => {
 
   if (!isVisible) return null;
 
-  const name = `question-${baseQuestion.serial}-${group.key}-${question.serial}-${indexes.join("-")}`;
+  const name = `question-${baseQuestionState.serial}-${groupState.key}-${question.serial}-${indexes.join("-")}`;
 
   return (
     <div

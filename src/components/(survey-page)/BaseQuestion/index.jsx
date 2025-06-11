@@ -29,11 +29,21 @@ const BaseQuestion = React.memo(({ question, index, data }) => {
   const { questions, initialQuestions } = useSelector((state) => state.survey);
 
   const dependenciesSatisfied = useDependenciesSatisfied(
-    question.dependencies,
+    question.sequence_dependencies,
     questions,
   );
 
-  const groups = useQuestionGroups(question, initialQuestions);
+  const {
+    _id,
+    value,
+    group_values,
+    groups: initial_groups,
+  } = questions?.[index] || {};
+
+  const groups = useQuestionGroups(
+    { _id, value, group_values },
+    initialQuestions,
+  );
 
   useEffect(() => {
     if (!areGroupsEqual(question.groups, groups)) {
@@ -42,10 +52,10 @@ const BaseQuestion = React.memo(({ question, index, data }) => {
   }, [index, groups, dispatch]);
 
   const isVisible = React.useMemo(() => {
-    const hasDependencies =
+    const hasSequenceDependencies =
       question.isSequenceDependent && !dependenciesSatisfied;
-    const hasBaseDependencies = question?.isGroupDependent;
-    return !hasDependencies && !hasBaseDependencies;
+    const hasGroupDependencies = question?.isGroupDependent;
+    return !hasSequenceDependencies && !hasGroupDependencies;
   }, [question, dependenciesSatisfied]);
 
   const questionText = React.useMemo(
@@ -109,9 +119,9 @@ const BaseQuestion = React.memo(({ question, index, data }) => {
         />
       </div>
 
-      {question?.value && groups.length > 0 && (
+      {question?.value && initial_groups?.length > 0 && (
         <div className="space-y-6 border border-primary p-4">
-          {question.groups.map((g, idx) => (
+          {initial_groups?.map((g, idx) => (
             <Groups
               key={[index, idx].join("-")}
               data={data}

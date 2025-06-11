@@ -58,9 +58,11 @@ export const areGroupsEqual = (a = [], b = []) => {
   if (a.length !== b.length) return false;
   return a.every((group, i) => {
     return (
-      group.key === b[i]?.key &&
-      group.questions?.length === b[i]?.questions?.length &&
-      group.questions.every((q, j) => q._id === b[i].questions?.[j]?._id)
+      group?.group_key === b[i]?.group_key &&
+      group?.group_questions?.length === b?.[i]?.group_questions?.length &&
+      group?.group_questions?.every(
+        (q, j) => q._id === b?.[i]?.group_questions?.[j]?._id,
+      )
     );
   });
 };
