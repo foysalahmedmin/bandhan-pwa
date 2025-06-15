@@ -24,6 +24,7 @@ export const fetchSurveyData = createAsyncThunk(
           return new Date(survey.value_date).toISOString();
         if ("value_array" in survey) return survey.value_array;
         if ("value_number_range" in survey) return survey.value_number_range;
+        if ("value_time_range" in survey) return survey.value_time_range;
         if ("value_date_range" in survey) return survey.value_date_range;
         if ("value_boolean" in survey) return survey.value_boolean;
         return "";
@@ -124,9 +125,17 @@ export const submitSurvey = createAsyncThunk(
           ...(q.input_type === "date" && {
             value_date: new Date(q.value),
           }),
-          ...(["text", "textarea", "email", "tel", "radio", "select"].includes(
-            q.input_type,
-          ) && {
+          ...([
+            "text",
+            "textarea",
+            "email",
+            "tel",
+            "url",
+            "time",
+            "color",
+            "radio",
+            "select",
+          ].includes(q.input_type) && {
             value_string: q.value,
           }),
           ...(["checkbox", "select-multiple"].includes(q.input_type) && {
@@ -134,6 +143,9 @@ export const submitSurvey = createAsyncThunk(
           }),
           ...(q.input_type === "number-range" && {
             value_number_range: q.value.map((v) => Number(v)),
+          }),
+          ...(q.input_type === "time-range" && {
+            value_time_range: q.value.map((v) => String(v)),
           }),
           ...(q.input_type === "date-range" && {
             value_date_range: q.value.map((v) => new Date(v)),
