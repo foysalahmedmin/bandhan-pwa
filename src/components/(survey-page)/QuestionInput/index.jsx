@@ -1,6 +1,7 @@
 import { Checkbox } from "@/components/ui/Checkbox";
 import { FormControl } from "@/components/ui/FormControl";
 import { Radio } from "@/components/ui/Radio";
+import Select from "@/components/ui/Select";
 import { formatDateForInput } from "@/utils/surveyUtils";
 import React from "react";
 
@@ -67,6 +68,29 @@ const RangeInput = React.memo(
                     ? formatDateForInput(value?.[1]) || ""
                     : ""
                 }
+                onChange={(e) => handleChange(e.target.value, false)}
+                required={isRequired}
+                placeholder={endPlaceholder}
+              />
+            </div>
+          );
+
+        case "time-range":
+          return (
+            <div className="flex items-center gap-2">
+              <FormControl
+                name={`${prefix}-start`}
+                type="time"
+                value={Array.isArray(value) ? value?.[0] || "" : ""}
+                onChange={(e) => handleChange(e.target.value, true)}
+                required={isRequired}
+                placeholder={startPlaceholder}
+              />
+              <span className="text-gray-500">{separatorText}</span>
+              <FormControl
+                name={`${prefix}-end`}
+                type="time"
+                value={Array.isArray(value) ? value?.[1] || "" : ""}
                 onChange={(e) => handleChange(e.target.value, false)}
                 required={isRequired}
                 placeholder={endPlaceholder}
@@ -143,6 +167,9 @@ const QuestionInput = React.memo(
       case "text":
       case "email":
       case "tel":
+      case "url":
+      case "time":
+      case "color":
         return (
           <FormControl
             name={name}
@@ -173,8 +200,21 @@ const QuestionInput = React.memo(
           />
         );
 
+      case "date":
+        return (
+          <FormControl
+            name={name}
+            type="datetime-local"
+            value={value ? formatDateForInput(value) : ""}
+            onChange={(e) => onChange(e.target.value)}
+            required={isRequired}
+            placeholder={placeholder}
+          />
+        );
+
       case "number-range":
       case "date-range":
+      case "time-range":
         return (
           <RangeInput
             question={question}
@@ -183,16 +223,6 @@ const QuestionInput = React.memo(
             isRequired={isRequired}
             isEnglish={isEnglish}
             prefix={name}
-          />
-        );
-
-      case "date":
-        return (
-          <FormControl
-            name={name}
-            type="datetime-local"
-            value={value ? formatDateForInput(value) : ""}
-            {...commonProps}
           />
         );
 
@@ -228,6 +258,21 @@ const QuestionInput = React.memo(
               </option>
             ))}
           </FormControl>
+        );
+
+      case "select-multiple":
+        return (
+          <Select
+            name={name}
+            className="w-full rounded border p-2"
+            options={question.options || []}
+            value={value || ""}
+            onChange={(value) => onChange(value)}
+            placeholder={isEnglish ? "Select options" : "অপশন নির্বাচন করুন"}
+            isMulti={true}
+            isCreatable={question.isCreatable || false}
+            required={isRequired}
+          />
         );
 
       default:
