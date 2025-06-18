@@ -79,10 +79,9 @@ const OutletSurveyPage = () => {
         try {
           const now = new Date();
           const currentMonth = `${now.getMonth() + 1}-${now.getFullYear()}`;
-          const currentYear = now.getFullYear();
           const response = await axios.post(
             URLS.baseURL +
-              `/api/outlet-survey/get-phases-with-outlets-surveys?month=${currentMonth}&year=${currentYear}`,
+              `/api/outlet-survey/get-phases-with-outlets-surveys?month=${currentMonth}`,
             {
               outletCodes: outletCodes || [],
             },
