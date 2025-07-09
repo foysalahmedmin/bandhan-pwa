@@ -127,7 +127,7 @@ const BaseQuestion = React.memo(({ question, index, data }) => {
         />
       </div>
 
-      {value && initialGroups?.length > 0 && (
+      {!!value && initialGroups?.length > 0 && (
         <div className="space-y-6 border border-primary p-4">
           {initialGroups?.map((g, idx) => (
             <Groups

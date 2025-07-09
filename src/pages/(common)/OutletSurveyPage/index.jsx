@@ -15,6 +15,8 @@ const OutletSurveyPage = () => {
   const { user, userInfo } = useAuthenticationState();
   const navigate = useNavigate();
 
+  console.log("userInfo", userInfo);
+
   const [isLoading, setIsLoading] = useState(false);
 
   const [outlets, setOutlets] = useState([]);
@@ -71,7 +73,14 @@ const OutletSurveyPage = () => {
   }, [user, selectedOutlet?.value]);
 
   useLayoutEffect(() => {
-    if (!outlets || outlets?.length <= 0) return;
+    if (
+      !outlets ||
+      outlets?.length <= 0 ||
+      !user ||
+      !userInfo ||
+      !outletDetails?.code
+    )
+      return;
     const outletCodes = outlets?.map((outlet) => outlet?.value);
     const getPhases = async () => {
       {
@@ -81,7 +90,7 @@ const OutletSurveyPage = () => {
           const currentMonth = `${now.getMonth() + 1}-${now.getFullYear()}`;
           const response = await axios.post(
             URLS.baseURL +
-              `/api/outlet-survey/get-phases-with-outlets-surveys?month=${currentMonth}`,
+              `/api/outlet-survey/get-phases-with-outlets-surveys?month=${currentMonth}&&area=${userInfo?.area?.id}&&region=${userInfo?.region?.id}&&territory=${userInfo?.territory?.id}&&salesPoint=${userInfo?.salesPoint}&&tms=${userInfo?._id}&&outletCode=${outletDetails?.code}`,
             {
               outletCodes: outletCodes || [],
             },
@@ -100,7 +109,7 @@ const OutletSurveyPage = () => {
       }
     };
     getPhases();
-  }, [user, outlets]);
+  }, [user, outlets, userInfo, outletDetails?.code]);
 
   useLayoutEffect(() => {
     if (!selectedPhase?.outlets?.length || !outletDetails) return;

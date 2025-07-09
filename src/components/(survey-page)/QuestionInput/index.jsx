@@ -2,7 +2,7 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { FormControl } from "@/components/ui/FormControl";
 import { Radio } from "@/components/ui/Radio";
 import Select from "@/components/ui/Select";
-import { formatDateForInput } from "@/utils/surveyUtils";
+import { formatDateForInput, isNumeric } from "@/utils/surveyUtils";
 import React from "react";
 
 const RangeInput = React.memo(
@@ -164,7 +164,6 @@ const QuestionInput = React.memo(
     };
 
     switch (question.input_type) {
-      case "text":
       case "email":
       case "tel":
       case "url":
@@ -178,6 +177,21 @@ const QuestionInput = React.memo(
           />
         );
 
+      case "text":
+        return (
+          <FormControl
+            name={name}
+            type="text"
+            {...(isNumeric(question?.min_length) && {
+              minLength: question?.min_length,
+            })}
+            {...(isNumeric(question?.max_length) && {
+              maxLength: question?.max_length,
+            })}
+            {...commonProps}
+          />
+        );
+
       case "textarea":
         return (
           <FormControl
@@ -185,6 +199,12 @@ const QuestionInput = React.memo(
             as="textarea"
             rows={4}
             className="h-[5rem] resize-y items-start py-1"
+            {...(isNumeric(question?.min_length) && {
+              minLength: question?.min_length,
+            })}
+            {...(isNumeric(question?.max_length) && {
+              maxLength: question?.max_length,
+            })}
             {...commonProps}
           />
         );
@@ -197,6 +217,12 @@ const QuestionInput = React.memo(
             {...commonProps}
             step={question?.step || "any"}
             onInput={handleNumberInput}
+            {...(isNumeric(question?.min_value) && {
+              min: question?.min_value,
+            })}
+            {...(isNumeric(question?.max_value) && {
+              max: question?.max_value,
+            })}
           />
         );
 
@@ -209,6 +235,20 @@ const QuestionInput = React.memo(
             onChange={(e) => onChange(e.target.value)}
             required={isRequired}
             placeholder={placeholder}
+            {...(question?.min_date && {
+              min: formatDateForInput(
+                question.min_date === "now"
+                  ? new Date()
+                  : new Date(question.min_date),
+              ),
+            })}
+            {...(question?.max_date && {
+              max: formatDateForInput(
+                question.max_date === "now"
+                  ? new Date()
+                  : new Date(question.max_date),
+              ),
+            })}
           />
         );
 
