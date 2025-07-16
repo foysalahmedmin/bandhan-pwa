@@ -1,10 +1,14 @@
 import { useMemo } from "react";
 
-export const useDependenciesSatisfied = (dependencies, questions, serial) => {
+export const useDependenciesSatisfied = (
+  dependencies,
+  questions,
+  isMultiDependency = false,
+) => {
   return useMemo(() => {
     if (!dependencies?.length) return true;
 
-    const requiredGroupMap = {}; // Grouped by required dependencies
+    const requiredGroupMap = {};
     const optionalResults = [];
 
     for (const dep of dependencies) {
@@ -23,9 +27,11 @@ export const useDependenciesSatisfied = (dependencies, questions, serial) => {
         isSatisfied = depQuestion.value === dep.value;
       }
 
-      const isBeforeCurrent = Number(depQuestion.serial) < Number(serial);
-
-      if (depQuestion.isRequired && isBeforeCurrent) {
+      if (
+        depQuestion.isRequired &&
+        depQuestion.isVisible &&
+        isMultiDependency
+      ) {
         if (!requiredGroupMap[depQuestion._id]) {
           requiredGroupMap[depQuestion._id] = [];
         }
@@ -35,12 +41,9 @@ export const useDependenciesSatisfied = (dependencies, questions, serial) => {
       }
     }
 
-    // All required groups must have at least one satisfied dependency
     const allRequiredSatisfied = Object.values(requiredGroupMap).every(
       (group) => group.some(Boolean),
     );
-
-    console.log(serial, requiredGroupMap, allRequiredSatisfied);
 
     if (Object.keys(requiredGroupMap).length > 0) {
       return allRequiredSatisfied;
@@ -48,5 +51,5 @@ export const useDependenciesSatisfied = (dependencies, questions, serial) => {
 
     // If no required dependencies, at least one optional must be satisfied
     return optionalResults.length > 0 ? optionalResults.some(Boolean) : false;
-  }, [dependencies, questions, serial]);
+  }, [dependencies, questions, isMultiDependency]);
 };

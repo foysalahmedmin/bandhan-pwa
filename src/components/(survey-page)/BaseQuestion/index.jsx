@@ -4,6 +4,7 @@ import { useQuestionGroups } from "@/hooks/survey-hooks/useQuestionGroups";
 import {
   setQuestionGroups,
   updateQuestionValue,
+  updateQuestionVisibility,
 } from "@/redux/slices/surveySlice";
 import {
   areGroupsEqual,
@@ -40,7 +41,7 @@ const BaseQuestion = React.memo(({ question, index, data }) => {
   const dependenciesSatisfied = useDependenciesSatisfied(
     sequence_dependencies,
     questions,
-    question?.serial,
+    !!question?.isMultiDependency,
   );
 
   const isVisible = React.useMemo(() => {
@@ -96,6 +97,12 @@ const BaseQuestion = React.memo(({ question, index, data }) => {
   useEffect(() => {
     if (!isVisible && !!value) {
       dispatch(updateQuestionValue({ index, value: "" }));
+    }
+
+    if (isVisible) {
+      dispatch(updateQuestionVisibility({ index, value: true }));
+    } else {
+      dispatch(updateQuestionVisibility({ index, value: false }));
     }
   }, [dispatch, index, value, isVisible]);
 

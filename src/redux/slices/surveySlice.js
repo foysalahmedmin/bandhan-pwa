@@ -246,6 +246,12 @@ export const surveySlice = createSlice({
         state.questions[index].value = value;
       }
     },
+    updateQuestionVisibility: (state, action) => {
+      const { index, value } = action.payload;
+      if (state.questions?.[index]) {
+        state.questions[index].isVisible = value;
+      }
+    },
     updateGroupQuestionValue: (state, action) => {
       const { indexes, value } = action.payload;
       if (
@@ -256,6 +262,18 @@ export const surveySlice = createSlice({
         state.questions[indexes[0]].groups[indexes[1]].group_questions[
           indexes[2]
         ].value = value;
+      }
+    },
+    updateGroupQuestionVisibility: (state, action) => {
+      const { indexes, value } = action.payload;
+      if (
+        state.questions?.[indexes[0]]?.groups?.[indexes[1]]?.group_questions?.[
+          indexes[2]
+        ]
+      ) {
+        state.questions[indexes[0]].groups[indexes[1]].group_questions[
+          indexes[2]
+        ].isVisible = value;
       }
     },
     setSuccessModalOpen: (state, action) => {
@@ -305,7 +323,9 @@ export const surveySlice = createSlice({
 export const {
   setQuestionGroups,
   updateQuestionValue,
+  updateQuestionVisibility,
   updateGroupQuestionValue,
+  updateGroupQuestionVisibility,
   setSuccessModalOpen,
   resetSurvey,
 } = surveySlice.actions;
