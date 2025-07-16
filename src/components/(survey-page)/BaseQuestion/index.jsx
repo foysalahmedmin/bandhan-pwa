@@ -40,6 +40,7 @@ const BaseQuestion = React.memo(({ question, index, data }) => {
   const dependenciesSatisfied = useDependenciesSatisfied(
     sequence_dependencies,
     questions,
+    question?.serial,
   );
 
   const isVisible = React.useMemo(() => {

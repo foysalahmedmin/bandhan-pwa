@@ -37,6 +37,7 @@ const GroupQuestion = React.memo(({ question, indexes, data }) => {
   const dependenciesSatisfied = useDependenciesSatisfied(
     sequence_dependencies,
     [baseQuestionState, ...(groupState?.group_questions || [])],
+    question?.serial,
     [baseQuestionState],
   );
 

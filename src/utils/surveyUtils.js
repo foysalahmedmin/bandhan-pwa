@@ -7,15 +7,37 @@ export const interpolateText = (text, data) => {
   });
 };
 
-export const formatDateForInput = (value) => {
+export const parseToFormattedInput = (value, type = "datetime-local") => {
   if (!value) return "";
-  const date = new Date(value);
+
+  let date;
+
+  // If input is a string in HH:mm format
+  if (typeof value === "string" && /^\d{2}:\d{2}$/.test(value)) {
+    const [hours, minutes] = value.split(":").map(Number);
+    date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+  } else {
+    date = new Date(value);
+  }
+
   if (isNaN(date)) return "";
 
-  const offset = date.getTimezoneOffset();
-  const local = new Date(date.getTime() - offset * 60000);
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
 
-  return local.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:mm"
+  switch (type) {
+    case "date":
+      return `${year}-${month}-${day}`;
+    case "time":
+      return `${hours}:${minutes}`;
+    case "datetime-local":
+    default:
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
 };
 
 export const processQuestionValue = (info, value) => {

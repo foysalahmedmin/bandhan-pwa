@@ -2,7 +2,7 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { FormControl } from "@/components/ui/FormControl";
 import { Radio } from "@/components/ui/Radio";
 import Select from "@/components/ui/Select";
-import { formatDateForInput, isNumeric } from "@/utils/surveyUtils";
+import { isNumeric, parseToFormattedInput } from "@/utils/surveyUtils";
 import React from "react";
 
 const RangeInput = React.memo(
@@ -25,7 +25,7 @@ const RangeInput = React.memo(
               <FormControl
                 name={`${prefix}-start`}
                 type="number"
-                value={Array.isArray(value) ? value[0] || "" : ""}
+                value={Array.isArray(value) ? value?.[0] || "" : ""}
                 onChange={(e) => handleChange(e.target.value, true)}
                 step={question?.step || "any"}
                 required={isRequired}
@@ -35,40 +35,9 @@ const RangeInput = React.memo(
               <FormControl
                 name={`${prefix}-end`}
                 type="number"
-                value={Array.isArray(value) ? value[1] || "" : ""}
+                value={Array.isArray(value) ? value?.[1] || "" : ""}
                 onChange={(e) => handleChange(e.target.value, false)}
                 step={question?.step || "any"}
-                required={isRequired}
-                placeholder={endPlaceholder}
-              />
-            </div>
-          );
-
-        case "date-range":
-          return (
-            <div className="flex items-center gap-2">
-              <FormControl
-                name={`${prefix}-start`}
-                type="datetime-local"
-                value={
-                  Array.isArray(value)
-                    ? formatDateForInput(value?.[0]) || ""
-                    : ""
-                }
-                onChange={(e) => handleChange(e.target.value, true)}
-                required={isRequired}
-                placeholder={startPlaceholder}
-              />
-              <span className="text-gray-500">{separatorText}</span>
-              <FormControl
-                name={`${prefix}-end`}
-                type="datetime-local"
-                value={
-                  Array.isArray(value)
-                    ? formatDateForInput(value?.[1]) || ""
-                    : ""
-                }
-                onChange={(e) => handleChange(e.target.value, false)}
                 required={isRequired}
                 placeholder={endPlaceholder}
               />
@@ -81,7 +50,11 @@ const RangeInput = React.memo(
               <FormControl
                 name={`${prefix}-start`}
                 type="time"
-                value={Array.isArray(value) ? value?.[0] || "" : ""}
+                value={
+                  Array.isArray(value)
+                    ? parseToFormattedInput(value?.[0], "time") || ""
+                    : ""
+                }
                 onChange={(e) => handleChange(e.target.value, true)}
                 required={isRequired}
                 placeholder={startPlaceholder}
@@ -90,7 +63,73 @@ const RangeInput = React.memo(
               <FormControl
                 name={`${prefix}-end`}
                 type="time"
-                value={Array.isArray(value) ? value?.[1] || "" : ""}
+                value={
+                  Array.isArray(value)
+                    ? parseToFormattedInput(value?.[1], "time") || ""
+                    : ""
+                }
+                onChange={(e) => handleChange(e.target.value, false)}
+                required={isRequired}
+                placeholder={endPlaceholder}
+              />
+            </div>
+          );
+
+        case "date-range":
+          return (
+            <div className="flex items-center gap-2">
+              <FormControl
+                name={`${prefix}-start`}
+                type="date"
+                value={
+                  Array.isArray(value)
+                    ? parseToFormattedInput(value?.[0], "date") || ""
+                    : ""
+                }
+                onChange={(e) => handleChange(e.target.value, true)}
+                required={isRequired}
+                placeholder={startPlaceholder}
+              />
+              <span className="text-gray-500">{separatorText}</span>
+              <FormControl
+                name={`${prefix}-end`}
+                type="date"
+                value={
+                  Array.isArray(value)
+                    ? parseToFormattedInput(value?.[1], "date") || ""
+                    : ""
+                }
+                onChange={(e) => handleChange(e.target.value, false)}
+                required={isRequired}
+                placeholder={endPlaceholder}
+              />
+            </div>
+          );
+
+        case "datetime-local-range":
+          return (
+            <div className="flex items-center gap-2">
+              <FormControl
+                name={`${prefix}-start`}
+                type="datetime-local"
+                value={
+                  Array.isArray(value)
+                    ? parseToFormattedInput(value?.[0], "datetime-local") || ""
+                    : ""
+                }
+                onChange={(e) => handleChange(e.target.value, true)}
+                required={isRequired}
+                placeholder={startPlaceholder}
+              />
+              <span className="text-gray-500">{separatorText}</span>
+              <FormControl
+                name={`${prefix}-end`}
+                type="datetime-local"
+                value={
+                  Array.isArray(value)
+                    ? parseToFormattedInput(value?.[1], "datetime-local") || ""
+                    : ""
+                }
                 onChange={(e) => handleChange(e.target.value, false)}
                 required={isRequired}
                 placeholder={endPlaceholder}
@@ -147,6 +186,7 @@ const QuestionInput = React.memo(
 
     const commonProps = {
       value: value ?? "",
+      disabled: question?.isDisabled,
       onChange: (e) => onChange(e.target.value),
       required: isRequired,
       placeholder,
@@ -167,7 +207,6 @@ const QuestionInput = React.memo(
       case "email":
       case "tel":
       case "url":
-      case "time":
       case "color":
         return (
           <FormControl
@@ -226,35 +265,97 @@ const QuestionInput = React.memo(
           />
         );
 
-      case "date":
+      case "time":
         return (
           <FormControl
+            disabled={!!question?.isDisabled}
             name={name}
-            type="datetime-local"
-            value={value ? formatDateForInput(value) : ""}
+            type="time"
+            value={value ? parseToFormattedInput(value, "time") : ""}
             onChange={(e) => onChange(e.target.value)}
             required={isRequired}
             placeholder={placeholder}
-            {...(question?.min_date && {
-              min: formatDateForInput(
-                question.min_date === "now"
+            {...(question?.min_datetime && {
+              min: parseToFormattedInput(
+                question.min_datetime === "now"
                   ? new Date()
-                  : new Date(question.min_date),
+                  : new Date(question.min_datetime),
+                "time",
               ),
             })}
-            {...(question?.max_date && {
-              max: formatDateForInput(
-                question.max_date === "now"
+            {...(question?.max_datetime && {
+              max: parseToFormattedInput(
+                question.max_datetime === "now"
                   ? new Date()
-                  : new Date(question.max_date),
+                  : new Date(question.max_datetime),
+                "time",
+              ),
+            })}
+          />
+        );
+
+      case "date":
+        return (
+          <FormControl
+            disabled={!!question?.isDisabled}
+            name={name}
+            type="date"
+            value={value ? parseToFormattedInput(value, "date") : ""}
+            onChange={(e) => onChange(e.target.value)}
+            required={isRequired}
+            placeholder={placeholder}
+            {...(question?.min_datetime && {
+              min: parseToFormattedInput(
+                question.min_datetime === "now"
+                  ? new Date()
+                  : new Date(question.min_datetime),
+                "date",
+              ),
+            })}
+            {...(question?.max_datetime && {
+              max: parseToFormattedInput(
+                question.max_datetime === "now"
+                  ? new Date()
+                  : new Date(question.max_datetime),
+                "date",
+              ),
+            })}
+          />
+        );
+
+      case "datetime-local":
+        return (
+          <FormControl
+            disabled={!!question?.isDisabled}
+            name={name}
+            type="datetime-local"
+            value={value ? parseToFormattedInput(value, "datetime-local") : ""}
+            onChange={(e) => onChange(e.target.value)}
+            required={isRequired}
+            placeholder={placeholder}
+            {...(question?.min_datetime && {
+              min: parseToFormattedInput(
+                question.min_datetime === "now"
+                  ? new Date()
+                  : new Date(question.min_datetime),
+                "datetime-local",
+              ),
+            })}
+            {...(question?.max_datetime && {
+              max: parseToFormattedInput(
+                question.max_datetime === "now"
+                  ? new Date()
+                  : new Date(question.max_datetime),
+                "datetime-local",
               ),
             })}
           />
         );
 
       case "number-range":
-      case "date-range":
       case "time-range":
+      case "date-range":
+      case "datetime-local-range":
         return (
           <RangeInput
             question={question}
