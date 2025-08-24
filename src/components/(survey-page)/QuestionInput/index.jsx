@@ -406,8 +406,13 @@ const QuestionInput = React.memo(
           <Select
             name={name}
             className="w-full rounded border p-2"
-            options={question.options || []}
-            value={value.map((opt) => ({ value: opt, label: opt })) || ""}
+            options={
+              question?.options?.map(({ value }) => ({
+                value: value,
+                label: value,
+              })) || []
+            }
+            value={value?.map((opt) => ({ value: opt, label: opt })) || ""}
             onChange={(value) =>
               onChange(value?.map((opt) => opt?.value || ""))
             }
@@ -418,6 +423,8 @@ const QuestionInput = React.memo(
           />
         );
 
+      case "boolean":
+        return <Checkbox name={name} value={value} onChange={onChange} />;
       default:
         return null;
     }
