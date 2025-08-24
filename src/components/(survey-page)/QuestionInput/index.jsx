@@ -412,7 +412,9 @@ const QuestionInput = React.memo(
                 label: value,
               })) || []
             }
-            value={value?.map((opt) => ({ value: opt, label: opt })) || ""}
+            value={
+              (value || [])?.map((opt) => ({ value: opt, label: opt })) || []
+            }
             onChange={(value) =>
               onChange(value?.map((opt) => opt?.value || ""))
             }
