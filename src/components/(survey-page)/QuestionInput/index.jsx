@@ -2,7 +2,7 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { FormControl } from "@/components/ui/FormControl";
 import { Radio } from "@/components/ui/Radio";
 import Select from "@/components/ui/Select";
-import { isNumeric, parseToFormattedInput } from "@/utils/surveyUtils";
+import { formatDateInputValue, isNumeric } from "@/utils/surveyUtils";
 import React from "react";
 
 const RangeInput = React.memo(
@@ -52,7 +52,7 @@ const RangeInput = React.memo(
                 type="time"
                 value={
                   Array.isArray(value)
-                    ? parseToFormattedInput(value?.[0], "time") || ""
+                    ? formatDateInputValue(value?.[0], "time") || ""
                     : ""
                 }
                 onChange={(e) => handleChange(e.target.value, true)}
@@ -65,7 +65,7 @@ const RangeInput = React.memo(
                 type="time"
                 value={
                   Array.isArray(value)
-                    ? parseToFormattedInput(value?.[1], "time") || ""
+                    ? formatDateInputValue(value?.[1], "time") || ""
                     : ""
                 }
                 onChange={(e) => handleChange(e.target.value, false)}
@@ -83,7 +83,7 @@ const RangeInput = React.memo(
                 type="date"
                 value={
                   Array.isArray(value)
-                    ? parseToFormattedInput(value?.[0], "date") || ""
+                    ? formatDateInputValue(value?.[0], "date") || ""
                     : ""
                 }
                 onChange={(e) => handleChange(e.target.value, true)}
@@ -96,7 +96,7 @@ const RangeInput = React.memo(
                 type="date"
                 value={
                   Array.isArray(value)
-                    ? parseToFormattedInput(value?.[1], "date") || ""
+                    ? formatDateInputValue(value?.[1], "date") || ""
                     : ""
                 }
                 onChange={(e) => handleChange(e.target.value, false)}
@@ -114,7 +114,7 @@ const RangeInput = React.memo(
                 type="datetime-local"
                 value={
                   Array.isArray(value)
-                    ? parseToFormattedInput(value?.[0], "datetime-local") || ""
+                    ? formatDateInputValue(value?.[0], "datetime-local") || ""
                     : ""
                 }
                 onChange={(e) => handleChange(e.target.value, true)}
@@ -127,7 +127,7 @@ const RangeInput = React.memo(
                 type="datetime-local"
                 value={
                   Array.isArray(value)
-                    ? parseToFormattedInput(value?.[1], "datetime-local") || ""
+                    ? formatDateInputValue(value?.[1], "datetime-local") || ""
                     : ""
                 }
                 onChange={(e) => handleChange(e.target.value, false)}
@@ -271,12 +271,12 @@ const QuestionInput = React.memo(
             disabled={!!question?.isDisabled}
             name={name}
             type="time"
-            value={value ? parseToFormattedInput(value, "time") : ""}
+            value={value ? formatDateInputValue(value, "time") : ""}
             onChange={(e) => onChange(e.target.value)}
             required={isRequired}
             placeholder={placeholder}
             {...(question?.min_datetime && {
-              min: parseToFormattedInput(
+              min: formatDateInputValue(
                 question.min_datetime === "now"
                   ? new Date()
                   : new Date(question.min_datetime),
@@ -284,7 +284,7 @@ const QuestionInput = React.memo(
               ),
             })}
             {...(question?.max_datetime && {
-              max: parseToFormattedInput(
+              max: formatDateInputValue(
                 question.max_datetime === "now"
                   ? new Date()
                   : new Date(question.max_datetime),
@@ -300,12 +300,12 @@ const QuestionInput = React.memo(
             disabled={!!question?.isDisabled}
             name={name}
             type="date"
-            value={value ? parseToFormattedInput(value, "date") : ""}
+            value={value ? formatDateInputValue(value, "date") : ""}
             onChange={(e) => onChange(e.target.value)}
             required={isRequired}
             placeholder={placeholder}
             {...(question?.min_datetime && {
-              min: parseToFormattedInput(
+              min: formatDateInputValue(
                 question.min_datetime === "now"
                   ? new Date()
                   : new Date(question.min_datetime),
@@ -313,7 +313,7 @@ const QuestionInput = React.memo(
               ),
             })}
             {...(question?.max_datetime && {
-              max: parseToFormattedInput(
+              max: formatDateInputValue(
                 question.max_datetime === "now"
                   ? new Date()
                   : new Date(question.max_datetime),
@@ -329,12 +329,12 @@ const QuestionInput = React.memo(
             disabled={!!question?.isDisabled}
             name={name}
             type="datetime-local"
-            value={value ? parseToFormattedInput(value, "datetime-local") : ""}
+            value={value ? formatDateInputValue(value, "datetime-local") : ""}
             onChange={(e) => onChange(e.target.value)}
             required={isRequired}
             placeholder={placeholder}
             {...(question?.min_datetime && {
-              min: parseToFormattedInput(
+              min: formatDateInputValue(
                 question.min_datetime === "now"
                   ? new Date()
                   : new Date(question.min_datetime),
@@ -342,7 +342,7 @@ const QuestionInput = React.memo(
               ),
             })}
             {...(question?.max_datetime && {
-              max: parseToFormattedInput(
+              max: formatDateInputValue(
                 question.max_datetime === "now"
                   ? new Date()
                   : new Date(question.max_datetime),
@@ -407,8 +407,10 @@ const QuestionInput = React.memo(
             name={name}
             className="w-full rounded border p-2"
             options={question.options || []}
-            value={value || ""}
-            onChange={(value) => onChange(value)}
+            value={value.map((opt) => ({ value: opt, label: opt })) || ""}
+            onChange={(value) =>
+              onChange(value?.map((opt) => opt?.value || ""))
+            }
             placeholder={isEnglish ? "Select options" : "অপশন নির্বাচন করুন"}
             isMulti={true}
             isCreatable={question.isCreatable || false}

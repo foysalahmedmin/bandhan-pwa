@@ -7,7 +7,7 @@ export const interpolateText = (text, data) => {
   });
 };
 
-export const parseToFormattedInput = (value, type = "datetime-local") => {
+export const formatDateInputValue = (value, type = "datetime-local") => {
   if (!value) return "";
 
   let date;
